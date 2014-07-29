@@ -1,4 +1,4 @@
-package com.pepsi.api;
+package com.pepsi.rest.api;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -9,7 +9,7 @@ import javax.ws.rs.core.MediaType;
  * Root resource (exposed at "api" path)
  */
 @Path("api")
-public class HellowWorldTextAPI {
+public class HellowWorldAPI {
 
     /**
      * Method handling HTTP GET requests. The returned object will be sent
@@ -19,7 +19,7 @@ public class HellowWorldTextAPI {
      */
     @GET
     @Produces(MediaType.TEXT_PLAIN)
-    public String getIt() {
+    public String sayHello() {
         return "Hello World!";
-    }
+    }    
 }

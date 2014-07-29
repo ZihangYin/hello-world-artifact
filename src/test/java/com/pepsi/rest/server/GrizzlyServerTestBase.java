@@ -1,4 +1,4 @@
-package com.pepsi.server.controller;
+package com.pepsi.rest.server;
 
 import java.net.URI;
 
@@ -11,7 +11,7 @@ import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import com.pepsi.server.controller.GrizzlyServer;
+import com.pepsi.rest.server.GrizzlyServer;
 
 public class GrizzlyServerTestBase {
 
@@ -26,6 +26,7 @@ public class GrizzlyServerTestBase {
         grizzlyWebServer = GrizzlyServer.startGrizzlyWebServer(uri);
         // create the client
         Client client = ClientBuilder.newClient();
+        
         webTarget = client.target(uri);
     }
     

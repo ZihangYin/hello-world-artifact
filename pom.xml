@@ -1,6 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	
+
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>HelloWorldGroup</groupId>
 	<artifactId>HelloWorldArtifact</artifactId>
@@ -35,10 +35,20 @@
 			<artifactId>javax.annotation-api</artifactId>
 			<version>1.2</version>
 		</dependency>
-
+		
 		<dependency>
 			<groupId>org.glassfish.jersey.containers</groupId>
-			<artifactId>jersey-container-grizzly2-http</artifactId>
+			<artifactId>jersey-container-grizzly2-servlet</artifactId>
+		</dependency>
+								
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-client</artifactId>
+        </dependency>
+
+		<dependency>
+			<groupId>org.glassfish.jersey.media</groupId>
+			<artifactId>jersey-media-json-jackson</artifactId>
 		</dependency>
 
 		<!-- RUNTIME DEPENDENCY -->
@@ -54,6 +64,9 @@
 	<build>
 		<plugins>
 			<plugin>
+				<!-- The maven-compiler-plugin is used to compile the sources of your 
+					project. Check http://maven.apache.org/plugins/maven-compiler-plugin for 
+					more information -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.1</version>
@@ -65,7 +78,12 @@
 					<showWarnings>true</showWarnings>
 				</configuration>
 			</plugin>
+
 			<plugin>
+				<!-- The exec-maven-plugin provides java and exec goals to help execute 
+					system and Java programs. Check http://mojo.codehaus.org/exec-maven-plugin/index.html 
+					for more information -->
+				<!-- Run the application using "mvn exec:java" to deploy to Grizzly Servlet -->
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
 				<version>1.2.1</version>
@@ -77,10 +95,10 @@
 					</execution>
 				</executions>
 				<configuration>
-					<mainClass>com.pepsi.server.controller.GrizzlyServer</mainClass>
+					<mainClass>com.pepsi.rest.server.GrizzlyServer</mainClass>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
-	
+
 </project>

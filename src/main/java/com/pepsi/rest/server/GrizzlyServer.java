@@ -1,4 +1,4 @@
-package com.pepsi.server.controller;
+package com.pepsi.rest.server;
 import java.io.IOException;
 import java.net.URI;
 
@@ -17,7 +17,7 @@ public class GrizzlyServer {
         try {                       
             // create a resource config that scans for JAX-RS resources and providers
             // in com.pepsi.api package
-            ResourceConfig resourceConfig = new ResourceConfig().packages("com.pepsi.api");
+            ResourceConfig resourceConfig = new ResourceConfig().packages("com.pepsi.rest.api");
 
             // create and start a new instance of grizzly http server
             // exposing the Jersey application at uri

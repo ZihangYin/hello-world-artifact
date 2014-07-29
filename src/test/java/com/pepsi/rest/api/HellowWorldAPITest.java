@@ -1,11 +1,11 @@
-package com.pepsi.api;
+package com.pepsi.rest.api;
 import org.junit.Test;
 
-import com.pepsi.server.controller.GrizzlyServerTestBase;
+import com.pepsi.rest.server.GrizzlyServerTestBase;
 
 import static org.junit.Assert.assertEquals;
 
-public class HellowWorldTextAPITest extends GrizzlyServerTestBase {
+public class HellowWorldAPITest extends GrizzlyServerTestBase {
 
 
     /**
@@ -13,7 +13,7 @@ public class HellowWorldTextAPITest extends GrizzlyServerTestBase {
      */
     
     @Test
-    public void testHelloWorld() {
+    public void testSayHello() {
         String responseMsg = webTarget.path("api").request().get(String.class);
         assertEquals("Hello World!", responseMsg);
     }
