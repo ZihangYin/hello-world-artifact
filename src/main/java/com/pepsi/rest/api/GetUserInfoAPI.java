@@ -6,21 +6,26 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.pepsi.rest.model.CreditCardInfo;
 import com.pepsi.rest.model.UserAddress;
-import com.pepsi.rest.model.UserInfo;
 import com.pepsi.rest.model.UserAddress.UserAddressType;
+import com.pepsi.rest.model.UserInfo;
 
 /**
  * Root resource (exposed at "api" path)
  */
 @Path("api")
 public class GetUserInfoAPI {
+    private static final Logger LOG = LogManager.getLogger(GetUserInfoAPI.class);
     
     /**
      * Method handling HTTP GET requests. The returned object will be sent
@@ -35,8 +40,9 @@ public class GetUserInfoAPI {
     @GET
     @Path("user/{userID}")
     @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
-    public UserInfo getCustomer(@PathParam("userID") String userID) {
-                
+    public UserInfo getCustomer(@PathParam("userID") String userID, @HeaderParam("accept") String acceptableContentTypes) {
+        LOG.debug("Request received for userId {} with acceptable content types {}", userID, acceptableContentTypes);
+        
         UserAddress userHomeAddress = new UserAddress("home-country", "home-state", "home-city",
                 "home-street", "00000");
         UserAddress userWorkAddress = new UserAddress("work-country", "work-state", "work-city",
@@ -57,6 +63,7 @@ public class GetUserInfoAPI {
         
         UserInfo userInfo = new UserInfo(userID, "firstName", "lastName", 27, userAddresses, userContacts, userCreditCardsInfo);
         
+        LOG.debug("Response returned for userId {}: {}", userID, userInfo);
         return userInfo;
     }
 }

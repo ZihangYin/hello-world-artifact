@@ -85,4 +85,13 @@ public class UserInfo {
     public void setUserCreditCardsInfo(Set<CreditCardInfo> userCreditCardsInfo) {
         this.userCreditCardsInfo = userCreditCardsInfo;
     }
+
+    @Override
+    public String toString() {
+        return "UserInfo [userID=" + userID + ", userFirstName="
+                + userFirstName + ", userLastName=" + userLastName + ", age="
+                + age + ", userAddresses=" + userAddresses + ", userContacts="
+                + userContacts + ", userCreditCardsInfo=" + userCreditCardsInfo
+                + "]";
+    }
 }

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+	<properties>
+		<property name="name">Application</property>
+		<property name="pattern">%d{ISO8601}{GMT+0} [%-5.5p] (%t) %C(line %L) - %m%n</property>
+	</properties>
+	<appenders>
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout pattern="${pattern}"/>
+		</Console>
+	</appenders>
+	<loggers>
+		<root level="DEBUG"> <!-- We log everything -->
+			<appender-ref ref="Console"/>
+		</root>
+	</loggers>
+</configuration>
