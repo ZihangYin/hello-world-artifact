@@ -1,4 +1,4 @@
-package com.pepsi.rest.api;
+package com.pepsi.rest.activity;
 
 import java.util.Map;
 
@@ -17,7 +17,7 @@ import com.pepsi.rest.server.GrizzlyServerTestBase;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-public class GetUserInfoAPITest extends GrizzlyServerTestBase {
+public class GetUserInfoActivityTest extends GrizzlyServerTestBase {
 
     @Test
     public void testGetUserInfoInJson() {

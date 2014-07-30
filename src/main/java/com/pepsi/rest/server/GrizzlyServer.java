@@ -8,6 +8,8 @@ import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 
+import com.pepsi.rest.constant.WebServiceConstants;
+
 
 public class GrizzlyServer {
         
@@ -15,10 +17,14 @@ public class GrizzlyServer {
     protected static HttpServer startGrizzlyWebServer(URI uri) {
                 
         try {                       
-            // create a resource config that scans for JAX-RS resources and providers
-            // in com.pepsi.api package
-            ResourceConfig resourceConfig = new ResourceConfig().packages("com.pepsi.rest.api");
-
+            /*
+             * create a resource config that scans for JAX-RS resources and providers under ebServiceConstants.ROOT_PACKAGE
+             * 
+             * Note: 
+             * All the API and filter should under this ROOT_PACKAGE. Otherwise, we will get 404 Not Found and filters will not get triggered.
+             */
+            ResourceConfig resourceConfig = new ResourceConfig().packages(WebServiceConstants.ROOT_PACKAGE);
+            
             // create and start a new instance of grizzly http server
             // exposing the Jersey application at uri
             return GrizzlyHttpServerFactory.createHttpServer(uri, resourceConfig);

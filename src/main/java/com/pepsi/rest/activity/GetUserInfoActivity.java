@@ -1,4 +1,4 @@
-package com.pepsi.rest.api;
+package com.pepsi.rest.activity;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,8 +24,8 @@ import com.pepsi.rest.model.UserInfo;
  * Root resource (exposed at "api" path)
  */
 @Path("api")
-public class GetUserInfoAPI {
-    private static final Logger LOG = LogManager.getLogger(GetUserInfoAPI.class);
+public class GetUserInfoActivity {
+    private static final Logger LOG = LogManager.getLogger(GetUserInfoActivity.class);
     
     /**
      * Method handling HTTP GET requests. The returned object will be sent

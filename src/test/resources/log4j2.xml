@@ -2,8 +2,7 @@
 
 <configuration>
 	<properties>
-		<property name="name">Application</property>
-		<property name="pattern">%d{ISO8601}{GMT+0} [%-5.5p] (%t) %C(line %L) - %m%n</property>
+		<property name="pattern">[%-5.5p] %C(line %L) - %m%n</property>
 	</properties>
 	<appenders>
 		<Console name="Console" target="SYSTEM_OUT">
