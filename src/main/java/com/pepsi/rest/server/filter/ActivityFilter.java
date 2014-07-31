@@ -17,6 +17,6 @@ public class ActivityFilter implements ContainerRequestFilter {
     public void filter(ContainerRequestContext requestContext)
             throws IOException {
         // TODO LOG Request Information
-        LOG.debug("RequstUserAgent: " + requestContext.getHeaders().get("user-agent")); 
+        LOG.debug("RequstUserAgent: {}", requestContext.getHeaders().get("user-agent")); 
     }
 }

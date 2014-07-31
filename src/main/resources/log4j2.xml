@@ -2,24 +2,40 @@
 
 <configuration>
 	<properties>
-		<property name="name">Application</property>
 		<property name="pattern">%d{ISO8601}{GMT+0} [%-5.5p] (%t) %C(line %L) - %m%n</property>
 	</properties>
+	
 	<appenders>
-		<RollingFile name="RollingFile" fileName="logs/${name}.log"
-				 filePattern="logs/$${date:yyyy-MM}/${name}-%d{yyyy-MM-dd}-%i.log.gz">
+	
+		<!-- TODO: Create own customized time based rolling file appender -->
+		<RollingFile name="Application" fileName="logs/Application.log"
+				 filePattern="logs/$${date:yyyy-MM-dd}/Application-%d{yyyy-MM-dd-HH}.log.gz">
 			<PatternLayout>
 				<pattern>${pattern}</pattern>
 			</PatternLayout>
 			<Policies>
-				<TimeBasedTriggeringPolicy /><!-- Rotated everyday -->
-				<SizeBasedTriggeringPolicy size="100 MB"/> <!-- Or every 100 MB -->
+				<TimeBasedTriggeringPolicy/><!-- Rotated every hour -->
+			</Policies>
+		</RollingFile>
+		
+		<RollingFile name="ServiceMonitor" fileName="logs/ServiceMonitor.log"
+				 filePattern="logs/$${date:yyyy-MM-dd}/ServiceMonitor-%d{yyyy-MM-dd-HH}.log.gz">
+			<PatternLayout>
+				<pattern>${pattern}</pattern>
+			</PatternLayout>
+			<Policies>
+				<TimeBasedTriggeringPolicy /><!-- Rotated every hour -->
 			</Policies>
 		</RollingFile>
 	</appenders>
+		
 	<loggers>
 		<root level="DEBUG">
-			<appender-ref ref="RollingFile"/> 
+			<appender-ref ref="Application"/> 
 		</root>
+        <!-- When additivity sets true, it means that parent-logger (in every case the root-logger) will also get the chance to log this stuff -->
+        <logger name="com.pepsi.rest.server.filter.ActivityFilter" additivity="FALSE" level="ALL">
+            <appender-ref ref="ServiceMonitor" level="DEBUG" />
+        </logger>
 	</loggers>
 </configuration>

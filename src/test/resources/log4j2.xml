@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<configuration>
-	<properties>
-		<property name="pattern">[%-5.5p] %C(line %L) - %m%n</property>
-	</properties>
+<configuration>	
 	<appenders>
 		<Console name="Console" target="SYSTEM_OUT">
-			<PatternLayout pattern="${pattern}"/>
+			<PatternLayout pattern="[%-5.5p] %C(line %L) - %m%n"/>
 		</Console>
 	</appenders>
+	
 	<loggers>
-		<root level="DEBUG"> <!-- We log everything -->
+		<root level="DEBUG">
 			<appender-ref ref="Console"/>
 		</root>
 	</loggers>

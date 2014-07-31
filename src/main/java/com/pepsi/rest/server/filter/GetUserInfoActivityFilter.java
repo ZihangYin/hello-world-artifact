@@ -14,8 +14,7 @@ public class GetUserInfoActivityFilter implements ContainerRequestFilter {
     @Override
     public void filter(ContainerRequestContext requestContext)
             throws IOException {
-        // TODO Auto-generated method stub
-        LOG.debug("AcceptedMediaTypes: " + requestContext.getAcceptableMediaTypes());    
+        LOG.debug("AcceptedMediaTypes: {}", requestContext.getAcceptableMediaTypes());    
     }
 }
 
