@@ -23,7 +23,7 @@ public class GrizzlyServer {
              * Note: 
              * All the API and filter should under this ROOT_PACKAGE. Otherwise, we will get 404 Not Found and filters will not get triggered.
              */
-            ResourceConfig resourceConfig = new ResourceConfig().packages(WebServiceConstants.ROOT_PACKAGE);    
+            ResourceConfig resourceConfig = new ResourceConfig().packages(WebServiceConstants.ROOT_PACKAGE).setApplicationName("HelloWorld Application");
             
             // create and start a new instance of grizzly http server
             // exposing the Jersey application at uri                     

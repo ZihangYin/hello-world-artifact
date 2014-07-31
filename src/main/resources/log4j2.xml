@@ -37,5 +37,8 @@
         <logger name="com.pepsi.rest.server.filter.ActivityFilter" additivity="FALSE" level="ALL">
             <appender-ref ref="ServiceMonitor" level="DEBUG" />
         </logger>
+        <logger name="com.pepsi.rest.server.monitor" additivity="FALSE" level="ALL">
+            <appender-ref ref="ServiceMonitor" level="DEBUG" />
+        </logger>
 	</loggers>
 </configuration>
