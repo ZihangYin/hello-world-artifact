@@ -3,6 +3,7 @@ package com.pepsi.rest.activity;
 import java.util.Map;
 
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 
@@ -21,7 +22,12 @@ public class GetUserInfoActivityTest extends GrizzlyServerTestBase {
 
     @Test
     public void testGetUserInfoInJson() {
-        UserInfo responseUserInfo = webTarget.path("api/user/test").request().accept(MediaType.APPLICATION_JSON).get(UserInfo.class);
+        Response response = webTarget.path("api/user/test").request().accept(MediaType.APPLICATION_JSON).get();     
+        
+        assertEquals(200, response.getStatus());
+        
+        UserInfo responseUserInfo = response.readEntity(UserInfo.class);
+        
         assertEquals("test", responseUserInfo.getUserID());
         assertEquals("firstName", responseUserInfo.getUserFirstName());
         assertEquals("lastName", responseUserInfo.getUserLastName());
@@ -50,7 +56,12 @@ public class GetUserInfoActivityTest extends GrizzlyServerTestBase {
     
     @Test
     public void testGetUserInfoInXML() {
-        UserInfo responseUserInfo = webTarget.path("api/user/test").request().accept(MediaType.APPLICATION_XML).get(UserInfo.class);
+        Response response = webTarget.path("api/user/test").request().accept(MediaType.APPLICATION_XML).get();     
+        
+        assertEquals(200, response.getStatus());
+        
+        UserInfo responseUserInfo = response.readEntity(UserInfo.class);
+        
         assertEquals("test", responseUserInfo.getUserID());
         assertEquals("firstName", responseUserInfo.getUserFirstName());
         assertEquals("lastName", responseUserInfo.getUserLastName());

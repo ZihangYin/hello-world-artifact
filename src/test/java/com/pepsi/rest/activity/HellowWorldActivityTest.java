@@ -1,4 +1,7 @@
 package com.pepsi.rest.activity;
+
+import javax.ws.rs.core.Response;
+
 import org.junit.Test;
 
 import com.pepsi.rest.server.GrizzlyServerTestBase;
@@ -13,8 +16,10 @@ public class HellowWorldActivityTest extends GrizzlyServerTestBase {
      */
     
     @Test
-    public void testSayHello() {
-        String responseMsg = webTarget.path("api/hello").request().get(String.class);
-        assertEquals("Hello World!", responseMsg);
+    public void testSayHello() {        
+        Response response = webTarget.path("api/hello").request().get();
+        
+        assertEquals(200, response.getStatus());
+        assertEquals("Hello World", response.readEntity(String.class));
     }
 }

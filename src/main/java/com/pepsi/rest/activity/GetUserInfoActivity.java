@@ -11,6 +11,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,7 +41,7 @@ public class GetUserInfoActivity {
     @GET
     @Path("user/{userID}")
     @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
-    public UserInfo getCustomer(@PathParam("userID") String userID, @HeaderParam("accept") String acceptableContentTypes) {
+    public Response getCustomer(@PathParam("userID") String userID, @HeaderParam("accept") String acceptableContentTypes) {
         LOG.debug("Request received for userId {} with acceptable content types {}", userID, acceptableContentTypes);
         
         UserAddress userHomeAddress = new UserAddress("home-country", "home-state", "home-city",
@@ -64,7 +65,7 @@ public class GetUserInfoActivity {
         UserInfo userInfo = new UserInfo(userID, "firstName", "lastName", 27, userAddresses, userContacts, userCreditCardsInfo);
         
         LOG.debug("Response returned for userId {}: {}", userID, userInfo);
-        return userInfo;
+        return Response.ok(userInfo).build();
     }
 }
 
