@@ -15,20 +15,20 @@ import org.glassfish.jersey.server.monitoring.RequestEventListener;
 public class ApplicationEventListenerImpl implements ApplicationEventListener {
     private static final Logger LOG = LogManager.getLogger(ApplicationEventListenerImpl.class);
     
-    private AtomicLong maxRequestId = new AtomicLong(0); 
-    private long initializationStartingTime;        
+    private final AtomicLong activityID = new AtomicLong(0);
+    private long AppInitStartingTime;         
     
     @Override
     public void onEvent(ApplicationEvent event) {
         switch (event.getType()) {
             case INITIALIZATION_START:
-                initializationStartingTime = System.currentTimeMillis(); 
+                AppInitStartingTime = System.currentTimeMillis(); 
                 break;
                 
             case INITIALIZATION_FINISHED:
                 LOG.info("Application {} was initialized in {} ms. ", 
                         event.getResourceConfig().getApplicationName(),
-                        System.currentTimeMillis() - initializationStartingTime);
+                        System.currentTimeMillis() - AppInitStartingTime);
                 break;
                 
             case DESTROY_FINISHED:
@@ -49,6 +49,6 @@ public class ApplicationEventListenerImpl implements ApplicationEventListener {
          * Note: We currently do not handle the case when maxRequestId is overflow
          * since it is very unlikely.
          */
-        return new RequestEventListenerImpl(maxRequestId.incrementAndGet());
+        return new ActivityLogEventListenerImpl(activityID.incrementAndGet());
     }
 }
