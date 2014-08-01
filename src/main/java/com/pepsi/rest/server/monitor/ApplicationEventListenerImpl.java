@@ -26,13 +26,13 @@ public class ApplicationEventListenerImpl implements ApplicationEventListener {
                 break;
                 
             case INITIALIZATION_FINISHED:
-                LOG.info("Application {} was initialized in {} ms. ", 
+                LOG.debug("Application {} was initialized in {} ms. ", 
                         event.getResourceConfig().getApplicationName(),
                         System.currentTimeMillis() - AppInitStartingTime);
                 break;
                 
             case DESTROY_FINISHED:
-                LOG.info("Application {} was destroyed. ", 
+                LOG.debug("Application {} was destroyed. ", 
                     event.getResourceConfig().getApplicationName());
                 break;
         default:

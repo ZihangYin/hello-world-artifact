@@ -2,9 +2,6 @@ package com.pepsi.rest.server;
 
 import java.net.URI;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.UriBuilder;
 
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -16,18 +13,11 @@ import com.pepsi.rest.server.GrizzlyServer;
 public class GrizzlyServerTestBase {
 
     protected static HttpServer grizzlyWebServer;
-    protected static WebTarget webTarget;
-
+    protected static URI uri = UriBuilder.fromUri("http://localhost/").port(8081).build();
+    
     @BeforeClass
-    public static void setUp() throws Exception {
-        
-        URI uri = UriBuilder.fromUri("http://localhost/").port(8081).build();
-        // start the server
-        grizzlyWebServer = GrizzlyServer.startGrizzlyWebServer(uri);
-        // create the client
-        Client client = ClientBuilder.newClient();
-        
-        webTarget = client.target(uri);
+    public static void setUp() throws Exception {       
+        grizzlyWebServer = GrizzlyServer.startGrizzlyWebServer(uri);        
     }
     
     @AfterClass

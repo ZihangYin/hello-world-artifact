@@ -42,11 +42,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.glassfish.jersey.core</groupId>
-			<artifactId>jersey-client</artifactId>
-		</dependency>
-
-		<dependency>
 			<groupId>org.glassfish.jersey.media</groupId>
 			<artifactId>jersey-media-json-jackson</artifactId>
 		</dependency>
@@ -70,6 +65,18 @@
 			<version>4.11</version>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>org.glassfish.jersey.core</groupId>
+			<artifactId>jersey-client</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.glassfish.jersey.connectors</groupId>
+			<artifactId>jersey-grizzly-connector</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>
