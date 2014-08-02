@@ -4,13 +4,14 @@ import javax.ws.rs.GET;
 import javax.ws.rs.container.DynamicFeature;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.FeatureContext;
-import javax.ws.rs.ext.Provider;
 
 import com.pepsi.rest.server.filter.GetUserInfoActivityFilter;
 
 import java.lang.reflect.Method;
 
-@Provider
+//Comment out this dynamic feature since we do not use it at this moment.
+//Without @Provider, this dynamic feature will not be registered.
+//@Provider
 public class GetUserInfoActivityDynamicFeature implements DynamicFeature {
     
     @Override

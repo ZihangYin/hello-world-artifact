@@ -37,18 +37,18 @@ import org.glassfish.jersey.internal.util.collection.StringIgnoreCaseKeyComparat
  *
  */
 
-// Comment out this filter since we do not use it at this moment.
-// Without @Provider, this filter will not be registered.
+//Comment out this filter since we do not use it at this moment.
+//Without @Provider, this filter will not be registered.
 //@Provider
 @PreMatching
 @Priority(Integer.MIN_VALUE)
-public class ActivityLogFilter implements ContainerRequestFilter, ContainerResponseFilter, WriterInterceptor {
-    private static final Logger LOG = LogManager.getLogger(ActivityLogFilter.class);
+public class ActivityAuditFilter implements ContainerRequestFilter, ContainerResponseFilter, WriterInterceptor {
+    private static final Logger LOG = LogManager.getLogger(ActivityAuditFilter.class);
 
     private static final String NOTIFICATION_PREFIX = "* ";
     private static final String REQUEST_PREFIX = "> ";
     private static final String RESPONSE_PREFIX = "< ";
-    private static final String ENTITY_LOGGER_PROPERTY = ActivityLogFilter.class.getName() + ".entityLogger";
+    private static final String ENTITY_LOGGER_PROPERTY = ActivityAuditFilter.class.getName() + ".entityLogger";
     private static final int DEFAULT_MAX_ENTITY_SIZE = 8 * 1024;
     
     private static final Comparator<Map.Entry<String, List<String>>> COMPARATOR =
@@ -65,16 +65,16 @@ public class ActivityLogFilter implements ContainerRequestFilter, ContainerRespo
     private final boolean printEntity;
     private final int maxEntitySize;
     
-    public ActivityLogFilter() {
+    public ActivityAuditFilter() {
         this(false);
     }
 
-    public ActivityLogFilter(final boolean printEntity) {
+    public ActivityAuditFilter(final boolean printEntity) {
         this.printEntity = printEntity;
         this.maxEntitySize = DEFAULT_MAX_ENTITY_SIZE;
     }
     
-    public ActivityLogFilter(final int maxEntitySize) {
+    public ActivityAuditFilter(final int maxEntitySize) {
         this.printEntity = true;
         this.maxEntitySize = maxEntitySize;
     }

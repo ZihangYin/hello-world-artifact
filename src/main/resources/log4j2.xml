@@ -2,7 +2,7 @@
 
 <configuration>
 	<properties>
-		<property name="pattern">%d{ISO8601}{GMT+0} [%-5.5p] (%t) %C(line %L) - %m%n</property>
+		<property name="pattern">%d{ISO8601}{GMT+0} [%p] (%t) %C(line %L) - %m%n</property>
 	</properties>
 	
 	<appenders>
@@ -41,4 +41,5 @@
             <appender-ref ref="ServiceMonitor" level="DEBUG" />
         </logger>
 	</loggers>
+	
 </configuration>

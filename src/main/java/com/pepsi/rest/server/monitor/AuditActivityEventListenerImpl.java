@@ -23,8 +23,8 @@ import org.glassfish.jersey.server.monitoring.RequestEventListener;
  * TODO: Better format of the LOG
  */
 @Provider
-public class ActivityLogEventListenerImpl implements RequestEventListener {
-    private static final Logger LOG = LogManager.getLogger(ActivityLogEventListenerImpl.class);
+public class AuditActivityEventListenerImpl implements RequestEventListener {
+    private static final Logger LOG = LogManager.getLogger(AuditActivityEventListenerImpl.class);
 
     private static final String NOTIFICATION_PREFIX = "* ";
     private static final String REQUEST_PREFIX = "> ";
@@ -42,7 +42,7 @@ public class ActivityLogEventListenerImpl implements RequestEventListener {
         }
     };
 
-    public ActivityLogEventListenerImpl(long activityID) {
+    public AuditActivityEventListenerImpl(long activityID) {
         this.activityID = activityID;
         this.methodStartTime = System.currentTimeMillis();
     }
@@ -102,7 +102,8 @@ public class ActivityLogEventListenerImpl implements RequestEventListener {
     public void onEvent(RequestEvent event) {
         if (LOG.isDebugEnabled()) {
             switch (event.getType()) {
-            case RESOURCE_METHOD_START:
+            // Note: The following code will only run if the request passed the preMatching filter.
+            case MATCHING_START:
                 ContainerRequest request = event.getContainerRequest();
                 final StringBuilder requestBuilder = new StringBuilder();
                 printRequestLine(requestBuilder, "Server has received a request", activityID, request.getMethod(), request.getUriInfo().getRequestUri());

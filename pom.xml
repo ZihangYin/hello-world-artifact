@@ -97,11 +97,11 @@
 				</configuration>
 			</plugin>
 
+			<!-- The exec-maven-plugin provides java and exec goals to help execute 
+				system and Java programs. Check http://mojo.codehaus.org/exec-maven-plugin/index.html 
+				for more information -->
+			<!-- Execute the application by running "mvn exec:java" -->
 			<plugin>
-				<!-- The exec-maven-plugin provides java and exec goals to help execute 
-					system and Java programs. Check http://mojo.codehaus.org/exec-maven-plugin/index.html 
-					for more information -->
-				<!-- Run the application using "mvn exec:java" to deploy to Grizzly Servlet -->
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
 				<version>1.2.1</version>
@@ -114,6 +114,35 @@
 				</executions>
 				<configuration>
 					<mainClass>com.pepsi.rest.server.GrizzlyServer</mainClass>
+				</configuration>
+			</plugin>
+
+			<!-- The Application Assembler plugin is a Maven plugin for generating 
+				scripts for starting java applications. All dependencies and the artifact 
+				of the project itself are placed in a generated Maven repository in a defined 
+				assemble directory. All artifacts (dependencies + the artifact from the project) 
+				are added to the classpath in the generated bin scripts. -->
+			<!-- Generating the start up script by running "mvn package appassembler:assemble" -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>appassembler-maven-plugin</artifactId>
+				<version>1.8.1</version>
+				<configuration>
+					<!-- set alternative assemble directory -->
+					<assembleDirectory>${project.build.directory}/assemble</assembleDirectory>
+					<platforms>
+						<platform>unix</platform>
+					</platforms>
+					<programs>
+						<program>
+							<mainClass>com.pepsi.rest.server.GrizzlyServer</mainClass>
+							<id>startup</id>
+							<jvmSettings>
+								<initialMemorySize>512m</initialMemorySize>	<!-- -Xms -->
+								<maxMemorySize>2048m</maxMemorySize> <!-- -Xmx -->
+							</jvmSettings>
+						</program>
+					</programs>
 				</configuration>
 			</plugin>
 		</plugins>
