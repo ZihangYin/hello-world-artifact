@@ -1,9 +1,10 @@
 package com.pepsi.rest.server;
-import java.io.IOException;
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.UriBuilder;
 
+import org.glassfish.grizzly.GrizzlyFuture;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -13,6 +14,8 @@ import com.pepsi.rest.constant.WebServiceConstants;
 
 public class GrizzlyServer {
 
+    private static volatile boolean keepRunning = true;
+    
     // This method is protected for unit test.
     protected static HttpServer startGrizzlyWebServer(URI uri) {
 
@@ -31,7 +34,12 @@ public class GrizzlyServer {
     // This method is protected for unit test.
     protected static void shutdownGrizzlyWebServer(HttpServer grizzlyWebServer) {
         if (grizzlyWebServer != null && grizzlyWebServer.isStarted()) {
-            grizzlyWebServer.shutdownNow();
+            GrizzlyFuture<HttpServer> future = grizzlyWebServer.shutdown(10000, TimeUnit.SECONDS);
+            while (!future.isDone()) {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException ignore){}
+            }            
         }        
     }
 
@@ -41,10 +49,20 @@ public class GrizzlyServer {
         HttpServer grizzlyWebServer = null;
         try {
             grizzlyWebServer = startGrizzlyWebServer(uri);
-            System.in.read();
-        } catch (IOException ioe) {                     
+            System.out.println("Started server.");
+            
+            Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    keepRunning = false;
+                }
+            }, "shutdownHook"));
+            
+            while(keepRunning){}
+            
         } finally {
-            shutdownGrizzlyWebServer(grizzlyWebServer);           
+            System.out.println("Stopping server.");
+            shutdownGrizzlyWebServer(grizzlyWebServer);
         }
     }
 }

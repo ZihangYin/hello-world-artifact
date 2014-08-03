@@ -74,6 +74,7 @@
 		<dependency>
 			<groupId>org.glassfish.jersey.connectors</groupId>
 			<artifactId>jersey-grizzly-connector</artifactId>
+			<scope>test</scope>
 		</dependency>
 
 	</dependencies>
@@ -116,34 +117,32 @@
 				</configuration>
 			</plugin>
 
-			<!-- The Application Assembler plugin is a Maven plugin for generating 
-				scripts for starting java applications. All dependencies and the artifact 
-				of the project itself are placed in a generated Maven repository in a defined 
-				assemble directory. All artifacts (dependencies + the artifact from the project) 
-				are added to the classpath in the generated bin scripts. -->
-			<!-- Generating the start up script by running "mvn package appassembler:assemble" -->
-			<!-- Execute the application by running "sh target/appassembler/bin/startup" -->
+			
+			<!-- We use this plugin to create an executable JAR, one simply needs to set the main class that serves as the application entry point -->
+			<!-- Generating the jar file by running "mvn clean package -->
+			<!-- Execute the application by running "java -jar target/HelloWorldArtifact-0.0.1-SNAPSHOT.jar" -->
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>appassembler-maven-plugin</artifactId>
-				<version>1.8.1</version>
-				<configuration>
-					<!-- set alternative assemble directory -->
-					<assembleDirectory>${basedir}/appassembler</assembleDirectory>
-					<platforms>
-						<platform>unix</platform>
-					</platforms>
-					<programs>
-						<program>
-							<mainClass>com.pepsi.rest.server.GrizzlyServer</mainClass>
-							<id>startup</id>
-							<jvmSettings>
-								<initialMemorySize>512m</initialMemorySize>	<!-- -Xms -->
-								<maxMemorySize>2048m</maxMemorySize> <!-- -Xmx -->
-							</jvmSettings>
-						</program>
-					</programs>
-				</configuration>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>2.3</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<transformers>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>com.pepsi.rest.server.GrizzlyServer</mainClass>
+								</transformer>
+							</transformers>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
