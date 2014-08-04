@@ -62,6 +62,18 @@
 			<version>2.0</version>
 		</dependency>
 
+		<!-- import to fix the WARN: Failed to load class "org.slf4j.impl.StaticLoggerBinder". 
+			This simple logger does not require any configuration and output on STDOUT 
+			with INFO level. In order to see DEBUG messages, you would need to pass in 
+			this System Property -Dorg.slf4j.simpleLogger.defaultLogLevel=DEBUG at your 
+			Java startup.
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>1.7.5</version>
+		</dependency>
+ 		-->
+ 		
 		<!-- RUNTIME DEPENDENCY -->
 		<!-- TEST DEPENDENCY -->
 		<dependency>
@@ -76,7 +88,6 @@
 			<artifactId>jersey-grizzly-connector</artifactId>
 			<scope>test</scope>
 		</dependency>
-
 	</dependencies>
 
 	<build>
@@ -117,7 +128,6 @@
 				</configuration>
 			</plugin>
 
-			
 			<!-- We use this plugin to create an executable JAR, one simply needs to set the main class that serves as the application entry point -->
 			<!-- Generating the jar file by running "mvn clean package -->
 			<!-- Execute the application by running "java -jar target/HelloWorldArtifact-0.0.1-SNAPSHOT.jar" -->

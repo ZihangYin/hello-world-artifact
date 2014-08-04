@@ -19,9 +19,13 @@ public class HellowWorldActivity {
      * @return String that will be returned as a text/plain response.
      */
     @GET
-    @Path("hello")
+    /*
+     * Requiring version and media type in the URL instead of Accept header or customized header 
+     * to ensure browser explorability of the resources across versions and media types.
+     */
+    @Path("/v1/hello")
     @Produces(MediaType.TEXT_PLAIN)
     public Response sayHello() {
         return Response.ok("Hello World").build();        
-    }    
+    }
 }

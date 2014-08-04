@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -18,25 +17,38 @@ import com.pepsi.rest.model.UserAddress;
 import com.pepsi.rest.model.UserAddress.UserAddressType;
 import com.pepsi.rest.model.UserInfo;
 
-/**
- * Root resource (exposed at "api" path)
- */
 @Path("api")
 public class GetUserInfoActivity {    
     /**
      * Method handling HTTP GET requests. The returned object will be sent
-     * to the client as either "application/json" or "application/xml" media type specified in the request header.
+     * to the client as either "application/json" or "application/xml" media type specified in URL.
      * 
      * How to verify by using CURL command
-     * curl -i http://localhost:8080/json/user/test -H "Accept: application/xml"
-     * curl -i http://localhost:8080/json/user/test -H "Accept: application/json"
+     * curl -i http://localhost:8080/json/users/test.json"
+     * curl -i http://localhost:8080/json/users/test.xml"
      *
-     * @return UserInfo that will be returned as either "application/json" or "application/xml" media type specified in the request header.
+     * @return UserInfo that will be returned as either "application/json" or "application/xml" media type specified in the URL.
      */
+    
     @GET
-    @Path("user/{userID}")
-    @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
-    public Response getCustomer(@PathParam("userID") String userID, @HeaderParam("accept") String acceptableContentTypes) {
+    /*
+     * Requiring version and media type in the URL instead of Accept header or customized header 
+     * to ensure browser explorability of the resources across versions and media types.
+     */
+    @Path("/v1/users/{userId}.json")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getCustomerInJson(@PathParam("userId") String userId) {
+        return getCustomer(userId);
+    }
+    
+    @GET
+    @Path("/v1/users/{userId}.xml")
+    @Produces(MediaType.APPLICATION_XML)    
+    public Response getCustomerInXML(@PathParam("userId") String userId) {
+        return getCustomer(userId);
+    }
+    
+    private Response getCustomer(String userId) {
         
         UserAddress userHomeAddress = new UserAddress("home-country", "home-state", "home-city",
                 "home-street", "00000");
@@ -56,7 +68,7 @@ public class GetUserInfoActivity {
         userCreditCardsInfo.add(creditCardInfo1);
         userCreditCardsInfo.add(creditCardInfo2);
         
-        UserInfo userInfo = new UserInfo(userID, "firstName", "lastName", 27, userAddresses, userContacts, userCreditCardsInfo);
+        UserInfo userInfo = new UserInfo(userId, "firstName", "lastName", 27, userAddresses, userContacts, userCreditCardsInfo);
         
         return Response.ok(userInfo).build();
     }

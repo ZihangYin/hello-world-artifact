@@ -23,7 +23,7 @@ public class ActivitySecurityFilterTest extends GrizzlyServerTestBase {
         client.register(HttpAuthenticationFeature.basic("username", "password"));        
         WebTarget webTarget = client.target(uri);
         
-        Response response =webTarget.path("api/hello").request().get();; 
+        Response response =webTarget.path("api/v1/hello").request().get();; 
         assertEquals(200, response.getStatus());
         assertEquals("Hello World", response.readEntity(String.class));      
     }
@@ -34,7 +34,7 @@ public class ActivitySecurityFilterTest extends GrizzlyServerTestBase {
         Client client = ClientBuilder.newClient();
         WebTarget webTarget = client.target(uri);
         
-        Response response =webTarget.path("api/hello").request().get();; 
+        Response response =webTarget.path("api/v1/hello").request().get();; 
         assertEquals(401, response.getStatus());
         assertEquals("Authentication Token is missing.", response.readEntity(String.class));
     }
@@ -46,7 +46,7 @@ public class ActivitySecurityFilterTest extends GrizzlyServerTestBase {
         client.register(HttpAuthenticationFeature.basic("", "password"));        
         WebTarget webTarget = client.target(uri);
         
-        Response response =webTarget.path("api/hello").request().get();; 
+        Response response =webTarget.path("api/v1/hello").request().get();; 
         assertEquals(401, response.getStatus());
         assertEquals("Authentication Token is missing: Missing username and/or password.", response.readEntity(String.class));
         
@@ -59,7 +59,7 @@ public class ActivitySecurityFilterTest extends GrizzlyServerTestBase {
         client.register(HttpAuthenticationFeature.basic("username", new String()));        
         WebTarget webTarget = client.target(uri);
         
-        Response response =webTarget.path("api/hello").request().get();; 
+        Response response =webTarget.path("api/v1/hello").request().get();; 
         assertEquals(401, response.getStatus());
         assertEquals("Authentication Token is missing: Missing username and/or password.", response.readEntity(String.class));
         
@@ -72,7 +72,7 @@ public class ActivitySecurityFilterTest extends GrizzlyServerTestBase {
         client.register(HttpAuthenticationFeature.basic(new String(), ""));        
         WebTarget webTarget = client.target(uri);
         
-        Response response =webTarget.path("api/hello").request().get();; 
+        Response response =webTarget.path("api/v1/hello").request().get();; 
         assertEquals(401, response.getStatus());
         assertEquals("Authentication Token is missing: Missing username and/or password.", response.readEntity(String.class));
         

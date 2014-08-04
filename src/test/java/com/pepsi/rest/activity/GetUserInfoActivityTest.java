@@ -39,7 +39,7 @@ public class GetUserInfoActivityTest extends GrizzlyServerTestBase {
     
     @Test
     public void testGetUserInfoInJsonHappyCase() {        
-        Response response = webTarget.path("api/user/test").request().accept(MediaType.APPLICATION_JSON).get();     
+        Response response = webTarget.path("api/v1/users/test.json").request().accept(MediaType.APPLICATION_JSON).get();     
 
         assertEquals(200, response.getStatus());
 
@@ -70,10 +70,10 @@ public class GetUserInfoActivityTest extends GrizzlyServerTestBase {
         assertEquals(2, responseUserInfo.getUserCreditCardsInfo().size());
         assertEquals(Sets.newHashSet(expectedCreditCardInfo1, expectedCreditCardInfo2), responseUserInfo.getUserCreditCardsInfo());
     }
-
+    
     @Test
     public void testGetUserInfoInXMLHappyCase() { 
-        Response response = webTarget.path("api/user/test").request().accept(MediaType.APPLICATION_XML).get();     
+        Response response = webTarget.path("api/v1/users/test.xml").request().get();     
 
         assertEquals(200, response.getStatus());
 
@@ -105,4 +105,10 @@ public class GetUserInfoActivityTest extends GrizzlyServerTestBase {
         assertEquals(Sets.newHashSet(expectedCreditCardInfo1, expectedCreditCardInfo2), responseUserInfo.getUserCreditCardsInfo());
     }
 
+    @Test
+    public void testGetUserInfoInXMLWithMismatchAcceptedMediaType() { 
+        Response response = webTarget.path("api/v1/users/test.xml").request().accept(MediaType.APPLICATION_JSON).get();     
+
+        assertEquals(406, response.getStatus());
+    }
 }

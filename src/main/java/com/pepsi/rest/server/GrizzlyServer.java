@@ -1,6 +1,5 @@
 package com.pepsi.rest.server;
 import java.net.URI;
-import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.UriBuilder;
 
@@ -28,17 +27,21 @@ public class GrizzlyServer {
         ResourceConfig resourceConfig = new ResourceConfig().packages(WebServiceConstants.ROOT_PACKAGE).setApplicationName("HelloWorld Application");
         // create and start a new instance of grizzly http server
         // exposing the Jersey application at uri                     
-        return GrizzlyHttpServerFactory.createHttpServer(uri, resourceConfig);
+        
+        return GrizzlyHttpServerFactory.createHttpServer(uri, resourceConfig);       
+        
     }
 
     // This method is protected for unit test.
     protected static void shutdownGrizzlyWebServer(HttpServer grizzlyWebServer) {
         if (grizzlyWebServer != null && grizzlyWebServer.isStarted()) {
-            GrizzlyFuture<HttpServer> future = grizzlyWebServer.shutdown(10000, TimeUnit.SECONDS);
+            GrizzlyFuture<HttpServer> future = grizzlyWebServer.shutdown();
             while (!future.isDone()) {
                 try {
                     Thread.sleep(2000);
-                } catch (InterruptedException ignore){}
+                } catch (InterruptedException ignore){
+                    System.out.println(ignore);
+                }
             }            
         }        
     }
@@ -56,7 +59,7 @@ public class GrizzlyServer {
                 public void run() {
                     keepRunning = false;
                 }
-            }, "shutdownHook"));
+            }));
             
             while(keepRunning){}
             

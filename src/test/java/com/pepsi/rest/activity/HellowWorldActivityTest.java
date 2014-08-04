@@ -28,7 +28,7 @@ public class HellowWorldActivityTest extends GrizzlyServerTestBase {
         client.register(HttpAuthenticationFeature.basic("username", "password"));        
         WebTarget webTarget = client.target(uri);
         
-        Response response = webTarget.path("api/hello").request().get();
+        Response response = webTarget.path("api/v1/hello").request().get();
         
         assertEquals(200, response.getStatus());
         assertEquals("Hello World", response.readEntity(String.class));
