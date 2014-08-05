@@ -26,5 +26,17 @@ if [ -z "$1" ] ; then
   exit 1
 fi
 
-exec nohup "$JAVACMD" $JAVA_OPTS -Xms512m -Xmx2048m -jar "$1"  >processmanager.out 2>&1 &
-echo $! > server.pid
+LOG_DIR="logs"
+TMP_DIR="tmp"
+
+if [ ! -d "$LOG_DIR" ]; then
+  mkdir $LOG_DIR
+fi
+
+if [ ! -d "$TMP_DIR" ]; then
+  mkdir $TMP_DIR
+fi
+
+#TODO: consider using cronolog to rotate this process manager log hourly
+exec nohup "$JAVACMD" $JAVA_OPTS -Xms512m -Xmx2048m -jar "$1"  > "$LOG_DIR/processmanager.out" 2>&1 &
+echo $! > "$TMP_DIR/server.pid"
