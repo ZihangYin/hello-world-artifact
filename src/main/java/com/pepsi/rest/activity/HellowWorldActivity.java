@@ -7,8 +7,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 /**
- * Root resource (exposed at "api" path)
+ * TODO: Implement API call rate limiting.  
  */
+
 @Path("api")
 public class HellowWorldActivity {
 

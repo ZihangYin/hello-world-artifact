@@ -38,5 +38,5 @@ if [ ! -d "$TMP_DIR" ]; then
 fi
 
 #TODO: consider using cronolog to rotate this process manager log hourly
-exec nohup "$JAVACMD" $JAVA_OPTS -Xms512m -Xmx2048m -jar "$1"  > "$LOG_DIR/processmanager.out" 2>&1 &
-echo $! > "$TMP_DIR/server.pid"
+exec nohup "$JAVACMD" $JAVA_OPTS -Xms512m -Xmx2048m -jar "$1"  > "$LOG_DIR/processmanager.log" 2>&1 &
+echo $! > "$TMP_DIR/processmanager.pid"
