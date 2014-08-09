@@ -2,26 +2,29 @@ package com.pepsi.rest.server;
 
 import java.net.URI;
 
-import javax.ws.rs.core.UriBuilder;
-
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import com.pepsi.rest.server.GrizzlyServer;
+import com.pepsi.rest.server.GrizzlyServerOrchestrator;
 
 public class GrizzlyServerTestBase {
 
     protected static HttpServer grizzlyWebServer;
-    protected static URI uri = UriBuilder.fromUri("http://localhost/").port(8081).build();
+    protected static URI httpURI;
     
     @BeforeClass
-    public static void setUp() throws Exception {       
-        grizzlyWebServer = GrizzlyServer.startGrizzlyWebServer(uri);        
+    public static void setUpHttpWebServer() throws Exception {
+        String serverPropertiesFile = "test-http-server.properties";
+        PropertiesParser serverPropertiesParser = new PropertiesParser(serverPropertiesFile);
+        httpURI = GrizzlyServerOrchestrator.buildGrizzlyServerURI(serverPropertiesParser, 
+                GrizzlyServerOrchestrator.HTTP_BASE_URL_PROPERTY, GrizzlyServerOrchestrator.HTTP_PORT_PROPERTY);
+        
+        grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServer(serverPropertiesFile);
     }
     
     @AfterClass
     public static void tearDown() throws Exception {
-        GrizzlyServer.shutdownGrizzlyWebServer(grizzlyWebServer);
+        GrizzlyServerOrchestrator.shutdownGrizzlyWebServer(grizzlyWebServer);
     }
 }

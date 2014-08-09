@@ -24,9 +24,9 @@ public class HellowWorldActivityTest extends GrizzlyServerTestBase {
     @Test
     public void testSayHelloHappyCase() {        
         ClientConfig clientConfig = new ClientConfig().connectorProvider(new GrizzlyConnectorProvider());
-        Client client = ClientBuilder.newBuilder().withConfig(clientConfig).build();        
+        Client client = ClientBuilder.newBuilder().withConfig(clientConfig).build();
         client.register(HttpAuthenticationFeature.basic("username", "password"));        
-        WebTarget webTarget = client.target(uri);
+        WebTarget webTarget = client.target(httpURI);
         
         Response response = webTarget.path("api/v1/hello").request().get();
         

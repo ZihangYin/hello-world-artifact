@@ -34,7 +34,7 @@ public class GetUserInfoActivityTest extends GrizzlyServerTestBase {
         ClientConfig clientConfig = new ClientConfig().connectorProvider(new GrizzlyConnectorProvider());
         Client client = ClientBuilder.newBuilder().withConfig(clientConfig).build();        
         client.register(HttpAuthenticationFeature.basic("username", "password"));        
-        webTarget = client.target(uri);
+        webTarget = client.target(httpURI);
     }
     
     @Test

@@ -21,7 +21,7 @@ public class ActivitySecurityFilterTest extends GrizzlyServerTestBase {
         ClientConfig clientConfig = new ClientConfig().connectorProvider(new GrizzlyConnectorProvider());
         Client client = ClientBuilder.newBuilder().withConfig(clientConfig).build();        
         client.register(HttpAuthenticationFeature.basic("username", "password"));        
-        WebTarget webTarget = client.target(uri);
+        WebTarget webTarget = client.target(httpURI);
         
         Response response =webTarget.path("api/v1/hello").request().get();; 
         assertEquals(200, response.getStatus());
@@ -32,7 +32,7 @@ public class ActivitySecurityFilterTest extends GrizzlyServerTestBase {
     public void testActivitySecurityFilterOverHttpMissingAuthentication () {
         
         Client client = ClientBuilder.newClient();
-        WebTarget webTarget = client.target(uri);
+        WebTarget webTarget = client.target(httpURI);
         
         Response response =webTarget.path("api/v1/hello").request().get();; 
         assertEquals(401, response.getStatus());
@@ -44,7 +44,7 @@ public class ActivitySecurityFilterTest extends GrizzlyServerTestBase {
         ClientConfig clientConfig = new ClientConfig().connectorProvider(new GrizzlyConnectorProvider());
         Client client = ClientBuilder.newBuilder().withConfig(clientConfig).build();        
         client.register(HttpAuthenticationFeature.basic("", "password"));        
-        WebTarget webTarget = client.target(uri);
+        WebTarget webTarget = client.target(httpURI);
         
         Response response =webTarget.path("api/v1/hello").request().get();; 
         assertEquals(401, response.getStatus());
@@ -57,7 +57,7 @@ public class ActivitySecurityFilterTest extends GrizzlyServerTestBase {
         ClientConfig clientConfig = new ClientConfig().connectorProvider(new GrizzlyConnectorProvider());
         Client client = ClientBuilder.newBuilder().withConfig(clientConfig).build();        
         client.register(HttpAuthenticationFeature.basic("username", new String()));        
-        WebTarget webTarget = client.target(uri);
+        WebTarget webTarget = client.target(httpURI);
         
         Response response =webTarget.path("api/v1/hello").request().get();; 
         assertEquals(401, response.getStatus());
@@ -70,7 +70,7 @@ public class ActivitySecurityFilterTest extends GrizzlyServerTestBase {
         ClientConfig clientConfig = new ClientConfig().connectorProvider(new GrizzlyConnectorProvider());
         Client client = ClientBuilder.newBuilder().withConfig(clientConfig).build();        
         client.register(HttpAuthenticationFeature.basic(new String(), ""));        
-        WebTarget webTarget = client.target(uri);
+        WebTarget webTarget = client.target(httpURI);
         
         Response response =webTarget.path("api/v1/hello").request().get();; 
         assertEquals(401, response.getStatus());
