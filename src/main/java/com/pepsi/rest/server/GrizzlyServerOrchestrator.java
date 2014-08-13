@@ -11,14 +11,16 @@ import org.glassfish.grizzly.GrizzlyFuture;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.http.server.ServerConfiguration;
+import org.glassfish.grizzly.servlet.ServletRegistration;
+import org.glassfish.grizzly.servlet.WebappContext;
 import org.glassfish.grizzly.ssl.SSLContextConfigurator;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpContainer;
 import org.glassfish.jersey.server.ContainerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
 
 import com.pepsi.rest.constant.WebServiceConstants;
-
 
 public class GrizzlyServerOrchestrator {
 
@@ -37,8 +39,12 @@ public class GrizzlyServerOrchestrator {
     
     private static volatile boolean terminate = false;
 
-    public static void main(String[] args) throws IOException {        
-
+    public static void main(String[] args) throws IOException {
+        
+//        // Grizzly uses JUL and this prevents performance impact of bridging to logback
+//        SLF4JBridgeHandler.removeHandlersForRootLogger();
+//        SLF4JBridgeHandler.install();
+        
         HttpServer grizzlyWebServer = null;
         try {
             printWithTimestamp(" [INFO] Starting Grizzly Server...");
@@ -70,57 +76,19 @@ public class GrizzlyServerOrchestrator {
         }
     }
 
-    // This method is protected for unit test.
-    protected static HttpServer startGrizzlyWebServer(String serverPropertyFile) {
-        try {
-            PropertiesParser serverPropertiesParser = new PropertiesParser(serverPropertyFile);
-        
-            URI httpURI = buildGrizzlyServerURI(serverPropertiesParser, HTTP_BASE_URL_PROPERTY, HTTP_PORT_PROPERTY);
-            URI httpsURI = buildGrizzlyServerURI(serverPropertiesParser, HTTPS_BASE_URL_PROPERTY, HTTPS_PORT_PROPERTY);
-            if (httpURI == null && httpsURI == null) {
-                throw new IllegalArgumentException("Grizzly Server failed while attempting to load URI and port: No URI and port provided");
-            }
-            
-            HttpServer grizzlyServer= new HttpServer();
-            /*
-             * create a resource config that scans for JAX-RS resources and providers under ebServiceConstants.ROOT_PACKAGE
-             * Note: All the API and filter should under this ROOT_PACKAGE. Otherwise, we will get 404 Not Found and filters will not get triggered.
-             */
-            ResourceConfig resourceConfig = new ResourceConfig().packages(WebServiceConstants.ROOT_PACKAGE).setApplicationName(WebServiceConstants.APPLICATION_NAME);
-            ServerConfiguration serverConfiguration = grizzlyServer.getServerConfiguration();
-            GrizzlyHttpContainer grizzlyHttpHandler = ContainerFactory.createContainer(GrizzlyHttpContainer.class, resourceConfig);
-            serverConfiguration.setPassTraceRequest(true);
-
-            if (httpURI != null) {
-                NetworkListener httpListener = new NetworkListener("GRIZZLY-HTTP", httpURI.getHost(), httpURI.getPort());
-                grizzlyServer.addListener(httpListener);
-                serverConfiguration.addHttpHandler(grizzlyHttpHandler, httpURI.getPath());
-            }   
-            
-            if (httpsURI != null) {
-                NetworkListener httpsListener = new NetworkListener("GRIZZLY-HTTPS", httpsURI.getHost(), httpsURI.getPort());
-                httpsListener.setSecure(true);
-                httpsListener.setSSLEngineConfig(buildSSLEngineConfigurator(serverPropertiesParser.getProperty(HTTPS_CERTIFICATE_PROPERTIES_FILE_PROPERTY)));
-                grizzlyServer.addListener(httpsListener);
-                serverConfiguration.addHttpHandler(grizzlyHttpHandler, httpsURI.getPath());
-            }
-            
-            try {
-                // Start the server.
-                grizzlyServer.start();
-            } catch (IOException ioe) {
-                grizzlyServer.shutdownNow();
-                throw new RuntimeException("Grizzly Server failed while attempting to start" , ioe);
-            }
-
-            return grizzlyServer;
-        } catch (IOException ioe) {
-            throw new RuntimeException( String.format("Grizzly Server failed while attempting to load %s", serverPropertyFile), ioe);
-        }
+    public static HttpServer startGrizzlyWebServer(String serverPropertyFile) {
+        HttpServer grizzlyWebServer = createGrizzlyWebServer(serverPropertyFile);
+        startGrizzlyWebServer(grizzlyWebServer);
+        return grizzlyWebServer;
+    }
+    
+    public static HttpServer startGrizzlyWebServlet(String serverPropertyFile) {
+        HttpServer grizzlyWebServer = createGrizzlyWebServer(serverPropertyFile);
+        startGrizzlyWebServlet(grizzlyWebServer);
+        return grizzlyWebServer;
     }
 
-    // This method is protected for unit test.
-    protected static void shutdownGrizzlyWebServer(HttpServer grizzlyWebServer) {
+    public static void shutdownGrizzlyWebServer(HttpServer grizzlyWebServer) {
         if (grizzlyWebServer != null && grizzlyWebServer.isStarted()) {            
             GrizzlyFuture<HttpServer> future = grizzlyWebServer.shutdown();
             while (!future.isDone()) {
@@ -129,6 +97,26 @@ public class GrizzlyServerOrchestrator {
                 } catch (InterruptedException ignore){}
             }            
         }      
+    }
+    
+    protected static void startGrizzlyWebServer(HttpServer grizzlyWebServer) {
+        try {
+            // Start the server.
+            grizzlyWebServer.start();
+        } catch (IOException ioe) {
+            grizzlyWebServer.shutdownNow();
+            throw new RuntimeException("Grizzly Server failed while attempting to start" , ioe);
+        }
+    }
+    
+    protected static void startGrizzlyWebServlet(HttpServer grizzlyWebServer) {
+        WebappContext webappContext = new WebappContext("GRIZZLY Web Server WebappContext");
+        ServletRegistration servletRegistration = webappContext.addServlet("JerseyServletContainer", ServletContainer.class);
+        servletRegistration.setInitParameter("jersey.config.server.provider.packages", WebServiceConstants.ROOT_PACKAGE);
+        servletRegistration.addMapping("/*");
+        webappContext.deploy(grizzlyWebServer);
+        
+        startGrizzlyWebServer(grizzlyWebServer);
     }
 
     /**
@@ -163,7 +151,6 @@ public class GrizzlyServerOrchestrator {
         }
         
         try {
-
             PropertiesParser certificatePropertiesParser = new PropertiesParser(httpsCertificatePropertyFile);
 
             boolean clientAuth = false;
@@ -199,6 +186,47 @@ public class GrizzlyServerOrchestrator {
             return new SSLEngineConfigurator(sslContext, false, clientAuth, clientAuth);
         } catch (IOException ioe) {
             throw new RuntimeException( String.format("Grizzly Server failed while attempting to load %s", httpsCertificatePropertyFile), ioe);
+        }
+    }
+    
+    // This method is protected for unit test.
+    protected static HttpServer createGrizzlyWebServer(String serverPropertyFile) {
+        try {
+            PropertiesParser serverPropertiesParser = new PropertiesParser(serverPropertyFile);
+        
+            URI httpURI = buildGrizzlyServerURI(serverPropertiesParser, HTTP_BASE_URL_PROPERTY, HTTP_PORT_PROPERTY);
+            URI httpsURI = buildGrizzlyServerURI(serverPropertiesParser, HTTPS_BASE_URL_PROPERTY, HTTPS_PORT_PROPERTY);
+            if (httpURI == null && httpsURI == null) {
+                throw new IllegalArgumentException("Grizzly Server failed while attempting to load URI and port: No URI and port provided");
+            }
+            
+            HttpServer grizzlyWebServer= new HttpServer();
+            /*
+             * create a resource config that scans for JAX-RS resources and providers under ebServiceConstants.ROOT_PACKAGE
+             * Note: All the API and filter should under this ROOT_PACKAGE. Otherwise, we will get 404 Not Found and filters will not get triggered.
+             */
+            ResourceConfig resourceConfig = new ResourceConfig().packages(WebServiceConstants.ROOT_PACKAGE).setApplicationName(WebServiceConstants.APPLICATION_NAME);
+            ServerConfiguration serverConfiguration = grizzlyWebServer.getServerConfiguration();
+            GrizzlyHttpContainer grizzlyHttpHandler = ContainerFactory.createContainer(GrizzlyHttpContainer.class, resourceConfig);
+            serverConfiguration.setPassTraceRequest(true);
+
+            if (httpURI != null) {
+                NetworkListener httpListener = new NetworkListener("GRIZZLY-HTTP", httpURI.getHost(), httpURI.getPort());
+                grizzlyWebServer.addListener(httpListener);
+                serverConfiguration.addHttpHandler(grizzlyHttpHandler, httpURI.getPath());
+            }   
+            
+            if (httpsURI != null) {
+                NetworkListener httpsListener = new NetworkListener("GRIZZLY-HTTPS", httpsURI.getHost(), httpsURI.getPort());
+                httpsListener.setSecure(true);
+                httpsListener.setSSLEngineConfig(buildSSLEngineConfigurator(serverPropertiesParser.getProperty(HTTPS_CERTIFICATE_PROPERTIES_FILE_PROPERTY)));
+                grizzlyWebServer.addListener(httpsListener);
+                serverConfiguration.addHttpHandler(grizzlyHttpHandler, httpsURI.getPath());
+            }
+
+            return grizzlyWebServer;
+        } catch (IOException ioe) {
+            throw new RuntimeException( String.format("Grizzly Server failed while attempting to load %s", serverPropertyFile), ioe);
         }
     }
 

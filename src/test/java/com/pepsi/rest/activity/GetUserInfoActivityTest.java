@@ -3,16 +3,13 @@ package com.pepsi.rest.activity;
 import java.util.Map;
 
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 
-import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
-import org.glassfish.jersey.grizzly.connector.GrizzlyConnectorProvider;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -30,11 +27,12 @@ public class GetUserInfoActivityTest extends GrizzlyServerTestBase {
     private static WebTarget webTarget;
     
     @BeforeClass
-    public static void setUpClient() throws Exception {        
-        ClientConfig clientConfig = new ClientConfig().connectorProvider(new GrizzlyConnectorProvider());
-        Client client = ClientBuilder.newBuilder().withConfig(clientConfig).build();        
+    public static void setUpWebServer() throws Exception {        
+        setUpHttpsWebServer();
+        
+        Client client = getHttpsClient();        
         client.register(HttpAuthenticationFeature.basic("username", "password"));        
-        webTarget = client.target(httpURI);
+        webTarget = client.target(uri);
     }
     
     @Test

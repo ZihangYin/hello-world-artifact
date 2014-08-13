@@ -19,7 +19,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.glassfish.jersey.grizzly.connector.GrizzlyConnectorProvider;
 import org.junit.After;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class GrizzlyServerOrchestratorTest {
@@ -27,12 +27,20 @@ public class GrizzlyServerOrchestratorTest {
     private static final String CLIENT_TRUSTORE_FILE_PROPERTY = "CLIENT_TRUSTORE_FILE";
     private static final String CLIENT_TRUSTORE_PASSWORD_PROPERTY = "CLIENT_TRUSTORE_PASSWORD";
     private static HttpServer grizzlyWebServer;
+    private static Client client;
+    
+    @BeforeClass
+    public static void setupClient() throws Exception {
+        ClientConfig clientConfig = new ClientConfig().connectorProvider(new GrizzlyConnectorProvider());
 
-    @Before
-    public void setUp() {
-        grizzlyWebServer = null;
+        PropertiesParser certificatePropertiesParser = new PropertiesParser("test-https-certificates.properties");
+        SslConfigurator sslConfigurator = SslConfigurator.newInstance()
+                .trustStoreFile(certificatePropertiesParser.getProperty(CLIENT_TRUSTORE_FILE_PROPERTY))
+                .trustStorePassword(certificatePropertiesParser.getProperty(CLIENT_TRUSTORE_PASSWORD_PROPERTY));
+        client = ClientBuilder.newBuilder().withConfig(clientConfig).sslContext(sslConfigurator.createSSLContext()).build();
+        client.register(HttpAuthenticationFeature.basic("username", "password"));
     }
-
+    
     @After
     public void tearDown() throws Exception {
         GrizzlyServerOrchestrator.shutdownGrizzlyWebServer(grizzlyWebServer);
@@ -42,7 +50,7 @@ public class GrizzlyServerOrchestratorTest {
     public void testMissingServerPropertiesFile() {
         String serverPropertyFile = "server-does-not-exist.properties";
         try {
-            grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServer(serverPropertyFile);
+            grizzlyWebServer = GrizzlyServerOrchestrator.createGrizzlyWebServer(serverPropertyFile);
         } catch (RuntimeException re) {
             assertEquals(String.format("Grizzly Server failed while attempting to load %s", serverPropertyFile), re.getMessage());
             return;
@@ -54,7 +62,7 @@ public class GrizzlyServerOrchestratorTest {
     public void testEmptyServerPropertiesFile() throws IOException {
         String serverPropertyFile = "test-empty-server.properties";       
         try {
-            grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServer(serverPropertyFile);
+            grizzlyWebServer = GrizzlyServerOrchestrator.createGrizzlyWebServer(serverPropertyFile);
         } catch (IllegalArgumentException iae) {
             assertEquals("Grizzly Server failed while attempting to load URI and port: No URI and port provided", iae.getMessage()); 
             return;
@@ -66,7 +74,7 @@ public class GrizzlyServerOrchestratorTest {
     public void testMissingCertificateProperties() {
         String serverPropertyFile = "test-missing-certificate-property-server.properties";
         try {
-            grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServer(serverPropertyFile);
+            grizzlyWebServer = GrizzlyServerOrchestrator.createGrizzlyWebServer(serverPropertyFile);
         } catch (IllegalArgumentException iae) {
             assertEquals(String.format("Grizzly Server failed while attempting to get https certificate property"), iae.getMessage());
             return;
@@ -78,7 +86,7 @@ public class GrizzlyServerOrchestratorTest {
     public void testMissingCertificatePropertiesFile() throws IOException {
         String serverPropertyFile = "test-certificate-file-does-not-exist-server.properties";       
         try {
-            grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServer(serverPropertyFile);
+            grizzlyWebServer = GrizzlyServerOrchestrator.createGrizzlyWebServer(serverPropertyFile);
         } catch (RuntimeException re) {
             PropertiesParser serverPropertiesParser = new PropertiesParser(serverPropertyFile);
             assertEquals(String.format("Grizzly Server failed while attempting to load %s", 
@@ -93,7 +101,7 @@ public class GrizzlyServerOrchestratorTest {
     public void testBadPortServerPropertiesFile() throws IOException {
         String serverPropertyFile = "test-bad-port-server.properties";       
         try {
-            grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServer(serverPropertyFile);
+            grizzlyWebServer = GrizzlyServerOrchestrator.createGrizzlyWebServer(serverPropertyFile);
         } catch (IllegalArgumentException iae) {
             return;
         }
@@ -104,7 +112,7 @@ public class GrizzlyServerOrchestratorTest {
     public void testMissingKeyStoreProperties() throws IOException {
         String serverPropertyFile = "test-missing-keystore-property-server.properties";       
         try {
-            grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServer(serverPropertyFile);
+            grizzlyWebServer = GrizzlyServerOrchestrator.createGrizzlyWebServer(serverPropertyFile);
         } catch (IllegalArgumentException iae) {
             assertEquals("Grizzly Server failed while attempting to get server keystore file", iae.getMessage());
             return;
@@ -116,7 +124,7 @@ public class GrizzlyServerOrchestratorTest {
     public void testMissingKeyStorePropertiesFile() throws IOException {
         String serverPropertyFile = "test-keystore-file-does-not-exist-server.properties";       
         try {
-            grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServer(serverPropertyFile);
+            grizzlyWebServer = GrizzlyServerOrchestrator.createGrizzlyWebServer(serverPropertyFile);
         } catch (IllegalArgumentException iae) {
             PropertiesParser serverPropertiesParser = new PropertiesParser(serverPropertyFile);
             PropertiesParser certificatePropertiesParser = new PropertiesParser(
@@ -130,24 +138,7 @@ public class GrizzlyServerOrchestratorTest {
     }
 
     @Test
-    public void testSSLWithBasicAuthOverHttpAndHttpsHappyCase() throws IOException {
-        String serverPropertiesFile = "test-http-https-server.properties";
-        PropertiesParser serverPropertiesParser = new PropertiesParser(serverPropertiesFile);
-
-        URI httpURI = GrizzlyServerOrchestrator.buildGrizzlyServerURI(serverPropertiesParser, 
-                GrizzlyServerOrchestrator.HTTP_BASE_URL_PROPERTY, GrizzlyServerOrchestrator.HTTP_PORT_PROPERTY);
-        URI httpsURI = GrizzlyServerOrchestrator.buildGrizzlyServerURI(serverPropertiesParser, 
-                GrizzlyServerOrchestrator.HTTPS_BASE_URL_PROPERTY, GrizzlyServerOrchestrator.HTTPS_PORT_PROPERTY);
-
-        grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServer(serverPropertiesFile);
-        Client client = getClient("test-https-certificates.properties");
-
-        assertHelloWorldResourceHappyCase(client, httpURI);
-        assertHelloWorldResourceHappyCase(client, httpsURI);
-    }
-
-    @Test
-    public void testSSLWithBasicAuthOverHttpHappyCase() throws IOException {
+    public void testWithBasicAuthOverHttpHappyCase() throws IOException {
         String serverPropertiesFile = "test-http-server.properties";
         PropertiesParser serverPropertiesParser = new PropertiesParser(serverPropertiesFile);
 
@@ -157,11 +148,18 @@ public class GrizzlyServerOrchestratorTest {
                 GrizzlyServerOrchestrator.HTTPS_BASE_URL_PROPERTY, GrizzlyServerOrchestrator.HTTPS_PORT_PROPERTY);
 
         grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServer(serverPropertiesFile);
-        Client client = getClient("test-https-certificates.properties");
+
+        assertHelloWorldResourceHappyCase(client, httpURI);
+        assertNull(httpsURI);
+        assertHelloWorldResourceFailedCase(client, "https://localhost:8444");
+        
+        GrizzlyServerOrchestrator.shutdownGrizzlyWebServer(grizzlyWebServer);
+        grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServlet(serverPropertiesFile);
         
         assertHelloWorldResourceHappyCase(client, httpURI);
         assertNull(httpsURI);
         assertHelloWorldResourceFailedCase(client, "https://localhost:8444");
+        
     }
 
     @Test
@@ -176,24 +174,39 @@ public class GrizzlyServerOrchestratorTest {
                 GrizzlyServerOrchestrator.HTTPS_BASE_URL_PROPERTY, GrizzlyServerOrchestrator.HTTPS_PORT_PROPERTY);
 
         grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServer(serverPropertiesFile);
-        Client client = getClient("test-https-certificates.properties");
 
+        assertHelloWorldResourceHappyCase(client, httpsURI);
+        assertNull(httpURI);
+        assertHelloWorldResourceFailedCase(client, "http://localhost:8081");
+        
+        GrizzlyServerOrchestrator.shutdownGrizzlyWebServer(grizzlyWebServer);
+        grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServlet(serverPropertiesFile);
+        
         assertHelloWorldResourceHappyCase(client, httpsURI);
         assertNull(httpURI);
         assertHelloWorldResourceFailedCase(client, "http://localhost:8081");
     }
 
-    private Client getClient (String certificatePropertiesFile) throws IOException {
-        ClientConfig clientConfig = new ClientConfig().connectorProvider(new GrizzlyConnectorProvider());
+    @Test
+    public void testSSLWithBasicAuthOverHttpAndHttpsHappyCase() throws IOException {
+        String serverPropertiesFile = "test-http-https-server.properties";
+        PropertiesParser serverPropertiesParser = new PropertiesParser(serverPropertiesFile);
 
-        PropertiesParser certificatePropertiesParser = new PropertiesParser(certificatePropertiesFile);
-        SslConfigurator sslConfigurator = SslConfigurator.newInstance()
-                .trustStoreFile(certificatePropertiesParser.getProperty(CLIENT_TRUSTORE_FILE_PROPERTY))
-                .trustStorePassword(certificatePropertiesParser.getProperty(CLIENT_TRUSTORE_PASSWORD_PROPERTY));
-        Client client = ClientBuilder.newBuilder().withConfig(clientConfig).sslContext(sslConfigurator.createSSLContext()).build();
-        client.register(HttpAuthenticationFeature.basic("username", "password"));
+        URI httpURI = GrizzlyServerOrchestrator.buildGrizzlyServerURI(serverPropertiesParser, 
+                GrizzlyServerOrchestrator.HTTP_BASE_URL_PROPERTY, GrizzlyServerOrchestrator.HTTP_PORT_PROPERTY);
+        URI httpsURI = GrizzlyServerOrchestrator.buildGrizzlyServerURI(serverPropertiesParser, 
+                GrizzlyServerOrchestrator.HTTPS_BASE_URL_PROPERTY, GrizzlyServerOrchestrator.HTTPS_PORT_PROPERTY);
+
+        grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServer(serverPropertiesFile);
+
+        assertHelloWorldResourceHappyCase(client, httpURI);
+        assertHelloWorldResourceHappyCase(client, httpsURI);
         
-        return client;
+        GrizzlyServerOrchestrator.shutdownGrizzlyWebServer(grizzlyWebServer);
+        grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServlet(serverPropertiesFile);
+        
+        assertHelloWorldResourceHappyCase(client, httpURI);
+        assertHelloWorldResourceHappyCase(client, httpsURI);
     }
     
     private void assertHelloWorldResourceHappyCase(Client client, URI uri) {
