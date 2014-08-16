@@ -20,7 +20,7 @@ import org.glassfish.jersey.server.ContainerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
-import com.pepsi.rest.constant.WebServiceConstants;
+import com.pepsi.rest.commons.WebServiceConstants;
 
 public class GrizzlyServerOrchestrator {
 

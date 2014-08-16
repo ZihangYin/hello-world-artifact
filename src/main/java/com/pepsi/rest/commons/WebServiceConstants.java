@@ -1,4 +1,4 @@
-package com.pepsi.rest.constant;
+package com.pepsi.rest.commons;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;

@@ -107,6 +107,7 @@
 			<artifactId>jersey-grizzly-connector</artifactId>
 			<scope>test</scope>
 		</dependency>
+		
 	</dependencies>
 
 	<build>

@@ -26,25 +26,27 @@ public class ActivitySecurityFilter implements ContainerRequestFilter {
         if (authentication == null) {
             throw new MissingAuthenticationTokenException("Authentication Token is missing.");
         }
+        
+        if (authentication.startsWith("Basic") || authentication.startsWith("basic")) {
+            //Replacing "Basic THE_BASE_64" to "THE_BASE_64" directly
+            authentication = authentication.replaceFirst("[B|b]asic ", "");
 
-        //Replacing "Basic THE_BASE_64" to "THE_BASE_64" directly
-        authentication = authentication.replaceFirst("[B|b]asic ", "");
+            //Decode the Base64 into byte[]
+            String[] authenticationInfo = Base64.decodeAsString(authentication).split(":");
 
-        //Decode the Base64 into byte[]
-        String[] authenticationInfo = Base64.decodeAsString(authentication).split(":");
+            //If the decode fails in any case
+            if (authenticationInfo.length < 2) {
+                throw new MissingAuthenticationTokenException("Authentication Token is missing: Missing username and/or password.");
+            }
 
-        //If the decode fails in any case
-        if (authenticationInfo.length < 2) {
-            throw new MissingAuthenticationTokenException("Authentication Token is missing: Missing username and/or password.");
+            String username = authenticationInfo[0];
+            String password = authenticationInfo[1];
+
+            if(username == null || password == null || username.isEmpty() || password.isEmpty()) {
+                throw new MissingAuthenticationTokenException("Authentication Token is missing: Missing username and/or password.");
+            }
+
+            //TODO: authentication and possibly authorization
         }
-
-        String username = authenticationInfo[0];
-        String password = authenticationInfo[1];
-
-        if(username == null || password == null || username.isEmpty() || password.isEmpty()) {
-            throw new MissingAuthenticationTokenException("Authentication Token is missing: Missing username and/or password.");
-        }
-
-        //TODO: authentication and possibly authorization
     }
 }

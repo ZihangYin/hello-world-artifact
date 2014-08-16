@@ -37,7 +37,7 @@ public class GetUserInfoActivityTest extends GrizzlyServerTestBase {
     
     @Test
     public void testGetUserInfoInJsonHappyCase() {        
-        Response response = webTarget.path("api/v1/users/test.json").request().accept(MediaType.APPLICATION_JSON).get();     
+        Response response = webTarget.path("api/v1/users/test.json").request(MediaType.APPLICATION_JSON).get();     
 
         assertEquals(200, response.getStatus());
 
@@ -105,7 +105,7 @@ public class GetUserInfoActivityTest extends GrizzlyServerTestBase {
 
     @Test
     public void testGetUserInfoInXMLWithMismatchAcceptedMediaType() { 
-        Response response = webTarget.path("api/v1/users/test.xml").request().accept(MediaType.APPLICATION_JSON).get();     
+        Response response = webTarget.path("api/v1/users/test.xml").request(MediaType.APPLICATION_JSON).get();     
 
         assertEquals(406, response.getStatus());
     }

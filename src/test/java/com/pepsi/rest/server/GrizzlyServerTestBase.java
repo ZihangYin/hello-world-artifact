@@ -12,6 +12,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.grizzly.connector.GrizzlyConnectorProvider;
 import org.junit.AfterClass;
 
+import com.pepsi.rest.commons.JSONObjectMapperImpl;
 import com.pepsi.rest.server.GrizzlyServerOrchestrator;
 
 public class GrizzlyServerTestBase {
@@ -44,6 +45,7 @@ public class GrizzlyServerTestBase {
     
     protected static Client getHttpClient() {
         ClientConfig clientConfig = new ClientConfig().connectorProvider(new GrizzlyConnectorProvider());
+        clientConfig.register(JSONObjectMapperImpl.class);
         Client client = ClientBuilder.newBuilder().withConfig(clientConfig).build();
         return client;
     }
@@ -73,12 +75,13 @@ public class GrizzlyServerTestBase {
     
     private static Client getHttpsClient (String certificatePropertiesFile) throws IOException {
         ClientConfig clientConfig = new ClientConfig().connectorProvider(new GrizzlyConnectorProvider());
-
+        clientConfig.register(JSONObjectMapperImpl.class);
         PropertiesParser certificatePropertiesParser = new PropertiesParser(certificatePropertiesFile);
         SslConfigurator sslConfigurator = SslConfigurator.newInstance()
                 .trustStoreFile(certificatePropertiesParser.getProperty(CLIENT_TRUSTORE_FILE_PROPERTY))
                 .trustStorePassword(certificatePropertiesParser.getProperty(CLIENT_TRUSTORE_PASSWORD_PROPERTY));
-        Client client = ClientBuilder.newBuilder().withConfig(clientConfig).sslContext(sslConfigurator.createSSLContext()).build();
+        Client client = ClientBuilder.newBuilder().withConfig(clientConfig)
+                .sslContext(sslConfigurator.createSSLContext()).build();
         return client;
     }
     
