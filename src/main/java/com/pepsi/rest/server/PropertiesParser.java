@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.util.Properties;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class PropertiesParser {
 
@@ -19,11 +20,11 @@ public class PropertiesParser {
         this.properties.load(propertiesInputStream);
     }
 
-    public String getProperty(@Nonnull String key) {
+    public @Nullable String getProperty(@Nonnull String key) {
         return properties.getProperty(key);
     }
 
-    public String getProperty(@Nonnull String key, @Nonnull String defaultValue) {
+    public @Nonnull String getProperty(@Nonnull String key, @Nonnull String defaultValue) {
         return properties.getProperty(key, defaultValue);
     }
 }

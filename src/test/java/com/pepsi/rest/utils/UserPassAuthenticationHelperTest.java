@@ -39,20 +39,20 @@ public class UserPassAuthenticationHelperTest {
         String passwordOne = "password";  
         ByteBuffer saltOne = UserPassAuthenticationHelper.generateRandomSalt();
         
-        byte[] hashedPasswordOne = UserPassAuthenticationHelper.generateHashedPassWithSalt(passwordOne, saltOne);
-        byte[] hashedPasswordDup = UserPassAuthenticationHelper.generateHashedPassWithSalt(passwordOne, saltOne);
+        ByteBuffer hashedPasswordOne = UserPassAuthenticationHelper.generateHashedPassWithSalt(passwordOne, saltOne);
+        ByteBuffer hashedPasswordDup = UserPassAuthenticationHelper.generateHashedPassWithSalt(passwordOne, saltOne);
         
         assertNotNull(hashedPasswordOne);
         assertThat(hashedPasswordOne, equalTo(hashedPasswordDup));
         
         String anotherPassword = "anotherPassword"; 
-        byte[] hashedPasswordTwo = UserPassAuthenticationHelper.generateHashedPassWithSalt(anotherPassword, saltOne);
+        ByteBuffer hashedPasswordTwo = UserPassAuthenticationHelper.generateHashedPassWithSalt(anotherPassword, saltOne);
         
         assertNotNull(hashedPasswordTwo);
         assertThat(hashedPasswordOne, not(equalTo(hashedPasswordTwo)));
         
         ByteBuffer anotherSalt = UserPassAuthenticationHelper.generateRandomSalt();
-        byte[] hashedPasswordThree = UserPassAuthenticationHelper.generateHashedPassWithSalt(anotherPassword, anotherSalt);
+        ByteBuffer hashedPasswordThree = UserPassAuthenticationHelper.generateHashedPassWithSalt(anotherPassword, anotherSalt);
         
         assertNotNull(hashedPasswordThree);
         assertThat(hashedPasswordOne, not(equalTo(hashedPasswordThree)));
@@ -95,17 +95,14 @@ public class UserPassAuthenticationHelperTest {
         String passwordOne = "password";  
         ByteBuffer saltOne = UserPassAuthenticationHelper.generateRandomSalt();
         
-        byte[] hashedPasswordOne = UserPassAuthenticationHelper.generateHashedPassWithSalt(passwordOne, saltOne);
-        ByteBuffer hashedPassByteBufferOne = ByteBuffer.wrap(hashedPasswordOne);
-        hashedPassByteBufferOne.clear();
-        
-        assertTrue(UserPassAuthenticationHelper.authenticatePassword(passwordOne, hashedPassByteBufferOne, saltOne));
+        ByteBuffer hashedPasswordOne = UserPassAuthenticationHelper.generateHashedPassWithSalt(passwordOne, saltOne);
+        assertTrue(UserPassAuthenticationHelper.authenticatePassword(passwordOne, hashedPasswordOne, saltOne));
         
         String passwordTwo = "anotherPassword";
-        assertFalse(UserPassAuthenticationHelper.authenticatePassword(passwordTwo, hashedPassByteBufferOne, saltOne));
+        assertFalse(UserPassAuthenticationHelper.authenticatePassword(passwordTwo, hashedPasswordOne, saltOne));
         
         ByteBuffer saltTwo = UserPassAuthenticationHelper.generateRandomSalt();
-        assertFalse(UserPassAuthenticationHelper.authenticatePassword(passwordOne, hashedPassByteBufferOne, saltTwo));
+        assertFalse(UserPassAuthenticationHelper.authenticatePassword(passwordOne, hashedPasswordOne, saltTwo));
         
     }
     
@@ -114,13 +111,10 @@ public class UserPassAuthenticationHelperTest {
         String passwordOne = "";  
         ByteBuffer saltOne = UserPassAuthenticationHelper.generateRandomSalt();
         
-        byte[] hashedPasswordOne = UserPassAuthenticationHelper.generateHashedPassWithSalt(passwordOne, saltOne);
-        ByteBuffer hashedPassByteBufferOne = ByteBuffer.wrap(hashedPasswordOne);
-        hashedPassByteBufferOne.clear();
-        
-        assertTrue(UserPassAuthenticationHelper.authenticatePassword(passwordOne, hashedPassByteBufferOne, saltOne));
+        ByteBuffer hashedPasswordOne = UserPassAuthenticationHelper.generateHashedPassWithSalt(passwordOne, saltOne);
+        assertTrue(UserPassAuthenticationHelper.authenticatePassword(passwordOne, hashedPasswordOne, saltOne));
         
         String passwordTwo = new String();
-        assertTrue(UserPassAuthenticationHelper.authenticatePassword(passwordTwo, hashedPassByteBufferOne, saltOne));
+        assertTrue(UserPassAuthenticationHelper.authenticatePassword(passwordTwo, hashedPasswordOne, saltOne));
     }
 }

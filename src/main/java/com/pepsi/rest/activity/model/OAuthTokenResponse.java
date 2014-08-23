@@ -13,7 +13,7 @@ import com.pepsi.rest.repository.model.AuthenticationToken;
 @XmlRootElement(name="token")
 @JsonInclude(value=Include.NON_NULL)
 public class OAuthTokenResponse {
-    //Authorization response parameters
+
     private static final String OAUTH_TOKEN_TYPE = "token_type";
     private static final String OAUTH_ACCESS_TOKEN = "access_token";
     private static final String OAUTH_EXPIRES_AT = "expire_at";

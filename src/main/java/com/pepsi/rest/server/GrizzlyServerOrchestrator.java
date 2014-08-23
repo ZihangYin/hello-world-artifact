@@ -16,6 +16,7 @@ import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.http.server.ServerConfiguration;
 import org.glassfish.grizzly.ssl.SSLContextConfigurator;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpContainer;
 import org.glassfish.jersey.server.ContainerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -45,7 +46,7 @@ public class GrizzlyServerOrchestrator {
             printWithTimestamp(" [INFO] Starting Grizzly Server...");
 
             try {
-                ResourceConfig resourceConfig = createResourceConfig();
+                ResourceConfig resourceConfig = createResourceConfig(new RepositoryBinder());
                 grizzlyWebServer = startGrizzlyWebServer(SERVER_PROPERTIES_FILE, resourceConfig);
                 printWithTimestamp(" [INFO] Grizzly Server Started");
 
@@ -111,13 +112,15 @@ public class GrizzlyServerOrchestrator {
     /**
      * @return ResourceConfig @Nonnull
      */
-    protected static ResourceConfig createResourceConfig() {
+    protected static ResourceConfig createResourceConfig(AbstractBinder... abstractBinders) {
         /*
          * create a resource config that scans for JAX-RS resources and providers under ebServiceConstants.ROOT_PACKAGE
          * Note: All the API and filter should under this ROOT_PACKAGE. Otherwise, we will get 404 Not Found and filters will not get triggered.
          */
         ResourceConfig resourceConfig = new ResourceConfig().packages(ServiceConstants.ROOT_PACKAGE).setApplicationName(ServiceConstants.APPLICATION_NAME);
-        resourceConfig.register(new RepositoryBinder());
+        for (AbstractBinder abstractBinder : abstractBinders) {
+            resourceConfig.register(abstractBinder);
+        }
         return resourceConfig;
     }
 
@@ -223,7 +226,6 @@ public class GrizzlyServerOrchestrator {
             ServerConfiguration serverConfiguration = grizzlyWebServer.getServerConfiguration();
             GrizzlyHttpContainer grizzlyHttpHandler = ContainerFactory.createContainer(GrizzlyHttpContainer.class, resourceConfig);
             serverConfiguration.setPassTraceRequest(true);
-            
             NetworkListener httpsListener = new NetworkListener("GRIZZLY-HTTPS", httpsURI.getHost(), httpsURI.getPort());
             httpsListener.setSecure(true);
             httpsListener.setSSLEngineConfig(buildSSLEngineConfigurator(serverPropertiesParser.getProperty(HTTPS_CERTIFICATE_PROPERTIES_FILE_PROPERTY)));

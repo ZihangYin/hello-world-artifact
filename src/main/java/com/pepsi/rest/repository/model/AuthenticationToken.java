@@ -4,13 +4,12 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.server.Uri;
 import org.joda.time.DateTime;
 
-public class AuthenticationToken {
+import com.pepsi.rest.commons.UUIDGenerator;
 
-    private static final int DEFAULT_EXPIRATION_IN_HOURS = 24;
+public class AuthenticationToken {
 
     public enum AuthenticationTokenType {
         ACCESS_TOKEN("Bearer"),
@@ -27,7 +26,7 @@ public class AuthenticationToken {
             return tokenType;
         }
     }
-
+    // TODO: use Lombok @Setter and @Getter 
     private final String token;
     private final AuthenticationTokenType tokenType;
     private final String refreshToken;
@@ -40,8 +39,20 @@ public class AuthenticationToken {
     private final Uri redirectUri;
     private final String state;
 
-    public static AuthenticationTokenBuilder buildToken() {
-        return new AuthenticationTokenBuilder();
+
+    public static AuthenticationTokenBuilder generateToken() {
+        return new AuthenticationTokenBuilder().token(UUIDGenerator.randomUUID().toString());
+    }
+
+    public static AuthenticationTokenBuilder buildToken(@Nonnull String token) {
+        return new AuthenticationTokenBuilder().token(token);
+    }
+
+    public static AuthenticationToken updateTokenValue(AuthenticationToken currentAuthenticationToken) {
+        return new AuthenticationToken(UUIDGenerator.randomUUID().toString(), currentAuthenticationToken.getTokenType(), currentAuthenticationToken.getRefreshToken(),
+                currentAuthenticationToken.getIssuedAt(), currentAuthenticationToken.getExpireAt(), currentAuthenticationToken.getUserId(),
+                currentAuthenticationToken.getClientId(), currentAuthenticationToken.getClinetSecretProof(), currentAuthenticationToken.getScope(),
+                currentAuthenticationToken.getRedirectUri(), currentAuthenticationToken.getState());
     }
 
     private AuthenticationToken(@Nonnull String token, @Nonnull AuthenticationTokenType tokenType, 
@@ -108,11 +119,13 @@ public class AuthenticationToken {
 
     public static class AuthenticationTokenBuilder {
 
+        private static final int DEFAULT_EXPIRATION_IN_HOURS = 24 * 60;
+
         private String token;
         private AuthenticationTokenType tokenType;
         private String refreshToken;
         private DateTime issuedAt;
-        private DateTime expireAt;
+        private int expiredInMinutes = DEFAULT_EXPIRATION_IN_HOURS;
         private String userId;
         private String clientId;
         private String clinetSecretProof;
@@ -122,8 +135,8 @@ public class AuthenticationToken {
 
         public AuthenticationTokenBuilder() {}
 
-        public AuthenticationTokenBuilder token(String token) {
-            this.token = token.toString();
+        private AuthenticationTokenBuilder token(String token) {
+            this.token = token;
             return this;
         }
 
@@ -133,18 +146,17 @@ public class AuthenticationToken {
         }
 
         public AuthenticationTokenBuilder refreshToken(String refreshToken) {
-            this.refreshToken = refreshToken.toString();
+            this.refreshToken = refreshToken;
             return this;
         }
 
         public AuthenticationTokenBuilder issuedAt(DateTime issuedAt) {
             this.issuedAt = issuedAt;
-            this.expireAt = issuedAt.plusHours(DEFAULT_EXPIRATION_IN_HOURS);
             return this;
         }
 
-        public AuthenticationTokenBuilder expireAt(DateTime expireAt) {
-            this.expireAt = expireAt;
+        public AuthenticationTokenBuilder expiredInMinutes(int expiredInMinutes) {
+            this.expiredInMinutes = expiredInMinutes;
             return this;
         }
 
@@ -179,13 +191,11 @@ public class AuthenticationToken {
         }
 
         public AuthenticationToken build() {
-            if (StringUtils.isBlank(token) || tokenType == null 
-                    || issuedAt == null || expireAt == null) {
+            if (token == null || tokenType == null || issuedAt == null) {
                 throw new IllegalArgumentException("Failed while attempting to build authentication token due to missing required parameters");
             }
-            
-            return new AuthenticationToken(token, tokenType, refreshToken, issuedAt, expireAt, userId, 
-                    clientId, clinetSecretProof, scope, redirectUri, state);
+            return new AuthenticationToken(token, tokenType, refreshToken, issuedAt, issuedAt.plusMinutes(expiredInMinutes), 
+                    userId, clientId, clinetSecretProof, scope, redirectUri, state);
         }
     }
 }

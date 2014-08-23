@@ -9,7 +9,7 @@ import com.pepsi.rest.repository.exception.RepositoryServerException;
 import com.pepsi.rest.repository.model.UserAuthorizationInfo;
 
 @Singleton
-public interface UserAuthorizationRepository {
+public interface UserAuthorizationRepository extends BasicAuthorizationRepository {
     
     public @Nullable UserAuthorizationInfo getUserAuthorizationInfo(@Nullable String userName) throws RepositoryClientException, RepositoryServerException;
     public @Nonnull String createNewUser(@Nullable UserAuthorizationInfo userAuthorizationInfo) throws RepositoryClientException, RepositoryServerException;

@@ -7,16 +7,20 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.filter.LoggingFilter;
 import org.glassfish.jersey.grizzly.connector.GrizzlyConnectorProvider;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.server.ServerProperties;
+import org.glassfish.jersey.server.TracingConfig;
 import org.junit.AfterClass;
 
 import com.pepsi.rest.server.GrizzlyServerOrchestrator;
 import com.pepsi.rest.utils.JSONObjectMapperImpl;
 
-public class GrizzlyServerIntegrationTestBase {
+public class GrizzlyServerTestBase {
 
     private static final String CLIENT_TRUSTORE_FILE_PROPERTY = "CLIENT_TRUSTORE_FILE";
     private static final String CLIENT_TRUSTORE_PASSWORD_PROPERTY = "CLIENT_TRUSTORE_PASSWORD";
@@ -25,34 +29,32 @@ public class GrizzlyServerIntegrationTestBase {
     protected static HttpServer grizzlyWebServer;
     protected static Client  client;
     protected static URI uri;
-    protected static String overrideServerPropertiesFile;
     
-    protected static void setUpHttpsWebServer() throws Exception {
-        setUpHttpsWebServer(null, null);
-    }
-    
-    protected static void setUpHttpsWebServer(String serverPropertiesFile) throws Exception {
-        setUpHttpsWebServer(serverPropertiesFile, null);
-    }
-    
-    protected static void setUpHttpsWebServer(ResourceConfig resourceConfig) throws Exception {
-        setUpHttpsWebServer(null, resourceConfig);
-    }
-
-    protected static void setUpHttpsWebServer(String serverPropertiesFile, ResourceConfig resourceConfig) throws Exception {
-        overrideServerPropertiesFile = serverPropertiesFile == null ? DEFAULT_HTTPS_SERVER_PROPERTIES_FILE : serverPropertiesFile;
-        ResourceConfig overrideResourceConfig = resourceConfig == null ? GrizzlyServerOrchestrator.createResourceConfig() : resourceConfig;
-        
-        PropertiesParser serverPropertiesParser = new PropertiesParser(overrideServerPropertiesFile);
+    protected static void setUpHttpsWebServer(AbstractBinder... abstractBinders) throws Exception {
+        PropertiesParser serverPropertiesParser = new PropertiesParser(DEFAULT_HTTPS_SERVER_PROPERTIES_FILE);
         uri = GrizzlyServerOrchestrator.buildGrizzlyServerURI(serverPropertiesParser, 
                 GrizzlyServerOrchestrator.HTTPS_BASE_URL_PROPERTY, GrizzlyServerOrchestrator.HTTPS_PORT_PROPERTY);
         
-        grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServer(overrideServerPropertiesFile, overrideResourceConfig);
+        grizzlyWebServer = GrizzlyServerOrchestrator.startGrizzlyWebServer(DEFAULT_HTTPS_SERVER_PROPERTIES_FILE, GrizzlyServerOrchestrator.createResourceConfig(abstractBinders));
         client = getHttpsClient ();
     }
     
+    protected static ResourceConfig addTracingSupport(ResourceConfig resourceConfig) {
+       
+        resourceConfig.register(new LoggingFilter(java.util.logging.Logger.getLogger(LoggingFilter.class.getName()), true));
+        resourceConfig.property(ServerProperties.TRACING, TracingConfig.ALL.name());
+        return resourceConfig;
+    }
+    
+    protected static ResourceConfig addBinder(ResourceConfig resourceConfig, AbstractBinder... abstractBinders) {
+        for (AbstractBinder abstractBinder : abstractBinders) {
+            resourceConfig.register(abstractBinder);
+        }
+        return resourceConfig;
+    }
+    
     private static Client getHttpsClient () throws IOException {
-        PropertiesParser serverPropertiesParser = new PropertiesParser(overrideServerPropertiesFile);
+        PropertiesParser serverPropertiesParser = new PropertiesParser(DEFAULT_HTTPS_SERVER_PROPERTIES_FILE);
         ClientConfig clientConfig = new ClientConfig().connectorProvider(new GrizzlyConnectorProvider());
         clientConfig.register(JSONObjectMapperImpl.class);
         PropertiesParser certificatePropertiesParser = new PropertiesParser(

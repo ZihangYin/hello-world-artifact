@@ -7,12 +7,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MultivaluedMap;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.pepsi.rest.activities.exception.OAuthBadRequestException;
 import com.pepsi.rest.activities.utils.OAuthRequestValidator;
-import com.pepsi.rest.activity.model.OAuthErrorResponse.OAuthErrCode;
-import com.pepsi.rest.activity.model.OAuthErrorResponse.OAuthErrDescFormatter;
+import com.pepsi.rest.activity.model.OAuthErrors.OAuthErrCode;
+import com.pepsi.rest.activity.model.OAuthErrors.OAuthErrDescFormatter;
 
 public class OAuthTokenRequest {
 
@@ -42,8 +43,8 @@ public class OAuthTokenRequest {
             return grantType;
         }
     }
-    
-    private final String grantType;
+
+    private final GrantType grantType;
     private final String clientId;
     private final String requestToken;
     private final String redirectUri;
@@ -52,22 +53,40 @@ public class OAuthTokenRequest {
     private final String refreshToken;
     private final List<String> scope;
 
-    public static OAuthTokenRequest fromMultiValuedParameters(@Nullable MultivaluedMap<String, String> multiValuedParameters) throws OAuthBadRequestException {
-        if(multiValuedParameters == null || multiValuedParameters.isEmpty()) {
-            throw new OAuthBadRequestException(new OAuthErrorResponse(OAuthErrCode.INVALID_REQUEST, OAuthErrDescFormatter.INVALID_REQUEST.toString()));
+    public static OAuthTokenRequest validateRequestFromMultiValuedParameters(@Nullable MultivaluedMap<String, String> multiValuedParameters) throws OAuthBadRequestException {
+        if (CollectionUtils.sizeIsEmpty(multiValuedParameters)) {
+            throw new OAuthBadRequestException(OAuthErrCode.INVALID_REQUEST, OAuthErrDescFormatter.INVALID_REQUEST.toString());
         }
-        
+
         return new OAuthTokenRequest(multiValuedParameters.getFirst(OAUTH_GRANT_TYPE), multiValuedParameters.getFirst(OAUTH_CLIENT_ID), 
                 multiValuedParameters.getFirst(OAUTH_REQUEST_TOKEN), multiValuedParameters.getFirst(OAUTH_REDIRECT_URI), 
                 multiValuedParameters.getFirst(OAUTH_USER_NAME), multiValuedParameters.getFirst(OAUTH_PASSWORD), 
                 multiValuedParameters.getFirst(OAUTH_REFRESH_TOKEN), multiValuedParameters.getFirst(OAUTH_SCOPE));
     }
 
-    public OAuthTokenRequest(String grantType, String clientId,
+    private OAuthTokenRequest(String grantType, String clientId,
             String requestToken, String redirectUri, String userName, 
             String password, String refreshToken, String scope) throws OAuthBadRequestException {
-        OAuthRequestValidator.validateRequiredParameter(OAuthTokenRequest.OAUTH_GRANT_TYPE, grantType); 
-        this.grantType = grantType;
+
+        OAuthRequestValidator.validateRequiredParameter(OAUTH_GRANT_TYPE, grantType); 
+
+        if (GrantType.PASSWORD.toString().equals(grantType)) {
+            OAuthRequestValidator.validateRequiredParameter(OAUTH_USER_NAME, userName);
+            OAuthRequestValidator.validateRequiredParameter(OAUTH_PASSWORD, password);
+            this.grantType = GrantType.PASSWORD;
+        } else if (GrantType.CLIENT_CREDENTIAL.toString().equals(grantType)) {
+            OAuthRequestValidator.validateRequiredParameter(OAUTH_CLIENT_ID, clientId);
+            this.grantType = GrantType.CLIENT_CREDENTIAL;
+        } else if (GrantType.AUTHORIZATION_CODE.toString().equals(grantType)) {
+            OAuthRequestValidator.validateRequiredParameter(OAUTH_REQUEST_TOKEN, requestToken);
+            OAuthRequestValidator.validateRequiredParameter(OAUTH_CLIENT_ID, clientId);
+            OAuthRequestValidator.validateRequiredParameter(OAUTH_REDIRECT_URI, redirectUri);
+            this.grantType = GrantType.AUTHORIZATION_CODE;
+        } else {
+            throw new OAuthBadRequestException(OAuthErrCode.UNSUPPORTED_GRANT_TYPE,  
+                    String.format(OAuthErrDescFormatter.UNSUPPORTED_GRANT_TYPE.toString(), grantType));
+        }
+
         this.clientId = clientId;
         this.requestToken = requestToken;
         this.redirectUri = redirectUri;
@@ -82,44 +101,79 @@ public class OAuthTokenRequest {
         }
     }
 
-    public @Nonnull String getGrantType() {
+    public @Nonnull GrantType getGrantType() {
         return grantType;
     }
-
+    
+    /**
+     * @return clientId @Nonnull if this is required parameter for this grant type
+     */
     public String getClientId() {
         return clientId;
     }
 
+    /**
+     * @return requestToken @Nonnull if this is required parameter for this grant type
+     */
     public String getRequestToken() {
         return requestToken;
     }
-
+    /**
+     * @return redirectUri @Nonnull if this is required parameter for this grant type
+     */
     public String getRedirectUri() {
         return redirectUri;
     }
-
+    /**
+     * @return userName @Nonnull if this is required parameter for this grant type
+     */
     public String getUserName() {
         return userName;
     }
-
+    /**
+     * @return password @Nonnull if this is required parameter for this grant type
+     */
     public String getPassword() {
         return password;
     }
-
+    /**
+     * @return refreshToken @Nonnull if this is required parameter for this grant type
+     */
     public String getRefreshToken() {
         return refreshToken;
     }
-
+    /**
+     * @return scope @Nonnull if this is required parameter for this grant type
+     */
     public List<String> getScope() {
         return scope;
     }
 
     @Override
     public String toString() {
-        return "OAuthTokenRequest [grantType=" + grantType + ", clientId="
-                + clientId + ", requestToken=" + requestToken + ", redirectUri="
-                + redirectUri + ", userName=" + userName + ", password="
-                + password + ", refreshToken=" + refreshToken + ", scope="
-                + scope + "]";
+        StringBuilder builder = new StringBuilder("OAuthTokenRequest [grantType=").append(grantType);
+        if (clientId != null) {
+            builder.append(", clientId=").append(clientId);
+        }
+        if (requestToken != null) {
+            builder.append(", requestToken=").append(requestToken);
+        }
+        if (redirectUri != null) {
+            builder.append(", redirectUri=").append(redirectUri);
+        }
+        if (userName != null) {
+            builder.append(", userName=").append(userName);
+        }
+        if (password != null) {
+            builder.append(", password=").append(password);
+        }
+        if (refreshToken != null) {
+            builder.append(", refreshToken=").append(refreshToken);
+        }
+        if (scope != null) {
+            builder.append(", scope=").append(scope);
+        }
+        builder.append("]");
+        return builder.toString();
     }
 }

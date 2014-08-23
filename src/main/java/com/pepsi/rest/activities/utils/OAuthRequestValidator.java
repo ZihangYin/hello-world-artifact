@@ -7,15 +7,11 @@ import javax.ws.rs.core.MultivaluedMap;
 import org.apache.commons.lang3.StringUtils;
 
 import com.pepsi.rest.activities.exception.OAuthBadRequestException;
-import com.pepsi.rest.activity.model.OAuthErrorResponse;
-import com.pepsi.rest.activity.model.OAuthErrorResponse.OAuthErrCode;
-import com.pepsi.rest.activity.model.OAuthErrorResponse.OAuthErrDescFormatter;
+import com.pepsi.rest.activity.model.OAuthErrors.OAuthErrCode;
+import com.pepsi.rest.activity.model.OAuthErrors.OAuthErrDescFormatter;
 
 public class OAuthRequestValidator {
 
-    /**
-     * The required parameters are not provided in the request
-     */
     public static void validateRequiredParameters(@Nonnull final MultivaluedMap<String, String> multiValuedParameters, @Nonnull String... requiredParas) 
             throws OAuthBadRequestException {
 
@@ -34,16 +30,16 @@ public class OAuthRequestValidator {
 
         if (errDescBuilder != null) {
             String errDesc = String.format(OAuthErrDescFormatter.MISSING_PARAMETERS.toString(), errDescBuilder.toString());
-            throw new OAuthBadRequestException(new OAuthErrorResponse(OAuthErrCode.MISSING_PARAMETERS, errDesc));
+            throw new OAuthBadRequestException(OAuthErrCode.MISSING_PARAMETERS, errDesc);
         }
     }
 
-    public static String validateRequiredParameter(@Nonnull String requiredPara, @Nullable String requiredParaVal) 
+    public static @Nonnull String validateRequiredParameter(@Nonnull String requiredPara, @Nullable String requiredParaVal) 
             throws OAuthBadRequestException {
 
         if (StringUtils.isBlank(requiredParaVal)) {
             String errDesc = String.format(OAuthErrDescFormatter.MISSING_PARAMETERS.toString(), requiredPara);
-            throw new OAuthBadRequestException(new OAuthErrorResponse(OAuthErrCode.MISSING_PARAMETERS, errDesc));
+            throw new OAuthBadRequestException(OAuthErrCode.MISSING_PARAMETERS, errDesc);
         } else {
             return requiredParaVal;
         }

@@ -1,24 +1,42 @@
 package com.pepsi.rest.activities.exception;
 
-import com.pepsi.rest.activity.model.ErrorResponse;
-
 public class BadRequestException extends RuntimeException {
 
     private static final long serialVersionUID = 3590068626650050213L;
     public static final String BAD_REQUEST = "Bad Request";
     
-    protected ErrorResponse errorResponse;
+    private final String errorType;
+    private final String errorCode;
+    private final String errorDescription;
     
-    public BadRequestException(String errMsg) {
-        super(errMsg);
+    public BadRequestException(String errorCode, String errorDescription) {
+        super();
+        this.errorType = this.getClass().getSimpleName();
+        this.errorCode = errorCode;
+        this.errorDescription = errorDescription;
     }
     
-    public BadRequestException(ErrorResponse errorResponse) {
-        super(errorResponse.getErrMsg());
-        this.errorResponse = errorResponse;
+    public String getErrorType() {
+        return errorType;
+    }
+
+    public String getErrorCode() {
+        return errorCode;
+    }
+
+    public String getErrorDescription() {
+        return errorDescription;
     }
     
-    public ErrorResponse getErrorResponse() {
-        return errorResponse;
+    @Override
+    public String toString() {
+        return "BadRequest [exceptionType=" + errorType
+                + ", errorCode=" + errorCode + ", errorDescription="
+                + errorDescription + "]";
+    }
+    
+    @Override
+    public String getMessage() {
+        return "[" + errorCode + "] " + errorDescription;
     }
 }

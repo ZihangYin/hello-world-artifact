@@ -1,7 +1,10 @@
 package com.pepsi.rest.repository.impl;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import javax.annotation.Nullable;
 
 import com.pepsi.rest.repository.AuthenticationTokenRepository;
 import com.pepsi.rest.repository.exception.RepositoryClientException;
@@ -14,31 +17,33 @@ public class AuthenticationTokenRepositoryImpl implements AuthenticationTokenRep
     private final Map<String, AuthenticationToken> authenticationTokens = new HashMap<>();
 
     @Override
-    public AuthenticationToken findToken(String token)
+    public @Nullable AuthenticationToken findToken(@Nullable String token)
             throws RepositoryClientException, RepositoryServerException {
         return authenticationTokens.get(token);
     }
 
     @Override
-    public boolean persistToken(AuthenticationToken authenticationToken)
+    public void persistToken(@Nullable AuthenticationToken authenticationToken)
             throws RepositoryClientException, RepositoryServerException {
         String token = authenticationToken.getToken();
         if (authenticationTokens.containsKey(token)) {
-            return false;
+            throw new RepositoryClientException("RepositoryClientException");
         }
-
         authenticationTokens.put(token, authenticationToken);
-        return true;
     }
 
     @Override
-    public boolean revokeToken(String token) throws RepositoryClientException, RepositoryServerException {
-        // TODO Auto-generated method stub
-        return false;
-    }
-    
-    public void print() {
-        System.out.println("Existing Tokens: " + authenticationTokens.keySet());
+    public void revokeToken(@Nullable String tokenType, @Nullable String token) throws RepositoryClientException, RepositoryServerException {
     }
 
+    @Override
+    public void authenticate(@Nullable String token, @Nullable String clientSecretProof) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void authorize(@Nullable String token, @Nullable String clientSecretProof,
+            @Nullable List<String> scope) {
+        // TODO Auto-generated method stub
+    }
 }
