@@ -34,10 +34,10 @@
 			<appender-ref ref="Application"/> 
 		</root>
         <!-- When additivity sets true, it means that parent-logger (in every case the root-logger) will also get the chance to log this stuff -->
-        <logger name="com.pepsi.rest.server.filter.ActivityLogFilter" additivity="FALSE" level="ALL">
+        <logger name="com.unicorn.rest.server.filter.ActivityLogFilter" additivity="FALSE" level="ALL">
             <appender-ref ref="ServiceMonitor" level="DEBUG" />
         </logger>
-        <logger name="com.pepsi.rest.server.monitor" additivity="FALSE" level="ALL">
+        <logger name="com.unicorn.rest.server.monitor" additivity="FALSE" level="ALL">
             <appender-ref ref="ServiceMonitor" level="DEBUG" />
         </logger>
 	</loggers>
