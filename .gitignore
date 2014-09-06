@@ -21,6 +21,13 @@ tmp/*
 dependency-reduced-pom.xml
 # private key store file
 unicorn-helloworld-keystore
+unicorn-helloworld-truststore
+
+src/main/resources/dynamodb.credentials
+src/main/resources/https-certificates.properties
+src/test/resources/dynamodb.credentials
+src/test/resources/test-https-certificates.properties
+
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*

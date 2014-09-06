@@ -1,49 +1,39 @@
 package com.unicorn.rest.repository.impl;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 
 import com.unicorn.rest.repository.AuthenticationTokenRepository;
 import com.unicorn.rest.repository.exception.RepositoryClientException;
 import com.unicorn.rest.repository.exception.RepositoryServerException;
 import com.unicorn.rest.repository.model.AuthenticationToken;
-
+import com.unicorn.rest.repository.model.AuthenticationToken.AuthenticationTokenType;
+import com.unicorn.rest.repository.table.AuthenticationTokenTable;
 
 public class AuthenticationTokenRepositoryImpl implements AuthenticationTokenRepository {
 
-    private final Map<String, AuthenticationToken> authenticationTokens = new HashMap<>();
+    private AuthenticationTokenTable authenticationTokenTable;
 
+    @Inject
+    public AuthenticationTokenRepositoryImpl(AuthenticationTokenTable authenticationTokenTable) {
+        this.authenticationTokenTable = authenticationTokenTable;
+    }
+    
     @Override
-    public @Nullable AuthenticationToken findToken(@Nullable String token)
+    public @Nullable AuthenticationToken findToken(@Nullable AuthenticationTokenType tokenType, @Nullable String token)
             throws RepositoryClientException, RepositoryServerException {
-        return authenticationTokens.get(token);
+        return authenticationTokenTable.getToken(tokenType, token);
     }
 
     @Override
     public void persistToken(@Nullable AuthenticationToken authenticationToken)
             throws RepositoryClientException, RepositoryServerException {
-        String token = authenticationToken.getToken();
-        if (authenticationTokens.containsKey(token)) {
-            throw new RepositoryClientException("RepositoryClientException");
-        }
-        authenticationTokens.put(token, authenticationToken);
+        authenticationTokenTable.persistToken(authenticationToken);
     }
 
     @Override
-    public void revokeToken(@Nullable String tokenType, @Nullable String token) throws RepositoryClientException, RepositoryServerException {
+    public void revokeToken(@Nullable AuthenticationTokenType tokenType, @Nullable String token) throws RepositoryClientException, RepositoryServerException {
+        authenticationTokenTable.revokeToken(tokenType, token);
     }
 
-    @Override
-    public void authenticate(@Nullable String token, @Nullable String clientSecretProof) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public void authorize(@Nullable String token, @Nullable String clientSecretProof,
-            @Nullable List<String> scope) {
-        // TODO Auto-generated method stub
-    }
 }

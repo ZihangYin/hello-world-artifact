@@ -63,7 +63,7 @@ public class GrizzlyServerOrchestrator {
                 public void run() {
                     terminate = true;
                 }
-            }));
+            }, "GrizzlyServerOrchestrator-ShutdownHook"));
 
             while(!terminate){}
 

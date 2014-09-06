@@ -10,39 +10,33 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import org.apache.commons.lang3.StringUtils;
-
 @EqualsAndHashCode
 @ToString
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserAuthorizationInfo {
     
-    @Getter @Nonnull private final String userName;
-    @Getter @Nonnull private final ByteBuffer hashedPassword;
+    @Getter @Nonnull private final Long userId;
+    @Getter @Nonnull private final ByteBuffer password;
     @Getter @Nonnull private final ByteBuffer salt;
-    @Getter private final String emailAddress;
-    @Getter private final String mobilePhone;
     
     public static UserAuthorizationInfoBuilder buildUserAuthorizationInfo() {
         return new UserAuthorizationInfoBuilder();
     }
     
     public static class UserAuthorizationInfoBuilder {
-        private String userName;
-        private ByteBuffer hashedPassword;
+        private Long userId;
+        private ByteBuffer password;
         private ByteBuffer salt;
-        private String emailAddress;
-        private String mobilePhone;
         
         public UserAuthorizationInfoBuilder() {}
 
-        public UserAuthorizationInfoBuilder userName(String userName) {
-            this.userName = userName;
+        public UserAuthorizationInfoBuilder userId(Long userId) {
+            this.userId = userId;
             return this;
         }
         
-        public UserAuthorizationInfoBuilder hashedPassword(ByteBuffer hashedPassword) {
-            this.hashedPassword = hashedPassword;
+        public UserAuthorizationInfoBuilder password(ByteBuffer password) {
+            this.password = password;
             return this;
         }
         
@@ -51,22 +45,12 @@ public class UserAuthorizationInfo {
             return this;
         }
         
-        public UserAuthorizationInfoBuilder emailAddress(String emailAddress) {
-            this.emailAddress = emailAddress;
-            return this;
-        }
-        
-        public UserAuthorizationInfoBuilder mobilePhone(String mobilePhone) {
-            this.mobilePhone = mobilePhone;
-            return this;
-        }
-        
         public UserAuthorizationInfo build() {
-            if (StringUtils.isBlank(userName) || hashedPassword == null || salt == null) {
+            if (userId == null || password == null || salt == null) {
                 throw new IllegalArgumentException("Failed while attempting to build user authorization info due to missing required parameters");
             }
             
-            return new UserAuthorizationInfo(userName, hashedPassword, salt, emailAddress, mobilePhone);
+            return new UserAuthorizationInfo(userId, password, salt);
         }
     }
 }

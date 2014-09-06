@@ -2,7 +2,6 @@ package com.unicorn.rest.activity.model;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -18,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @EqualsAndHashCode
 @NoArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PUBLIC)
+@AllArgsConstructor()
 public class ErrorResponse {
     
     private static final String ERROR_TYPE = "error_type";

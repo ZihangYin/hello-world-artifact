@@ -15,6 +15,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.validator.ValidatorException;
 import org.glassfish.jersey.internal.util.Base64;
 import org.junit.After;
 import org.junit.BeforeClass;
@@ -30,16 +31,18 @@ import com.unicorn.rest.activity.model.OAuthErrors.OAuthErrCode;
 import com.unicorn.rest.activity.model.OAuthErrors.OAuthErrDescFormatter;
 import com.unicorn.rest.activity.model.OAuthTokenRequest.GrantType;
 import com.unicorn.rest.repository.exception.DuplicateKeyException;
+import com.unicorn.rest.repository.exception.ItemNotFoundException;
 import com.unicorn.rest.repository.exception.RepositoryClientException;
 import com.unicorn.rest.repository.exception.RepositoryServerException;
 import com.unicorn.rest.repository.impl.AuthenticationTokenRepositoryImpl;
-import com.unicorn.rest.repository.impl.UserAuthorizationRepositoryImpl;
+import com.unicorn.rest.repository.impl.UserRepositoryImpl;
 import com.unicorn.rest.repository.model.UserAuthorizationInfo;
 import com.unicorn.rest.repository.model.AuthenticationToken.AuthenticationTokenType;
 import com.unicorn.rest.server.GrizzlyServerTestBase;
-import com.unicorn.rest.server.filter.utils.Authorizer.AuthenticationMethod;
+import com.unicorn.rest.server.filter.model.AuthenticationMethod;
 import com.unicorn.rest.server.injector.TestRepositoryBinder;
-import com.unicorn.rest.utils.UserPassAuthenticationHelper;
+import com.unicorn.rest.utils.PasswordAuthenticationHelper;
+import com.unicorn.rest.utils.SimpleFlakeKeyGenerator;
 
 public class OAuthTokenActivitiesTest extends GrizzlyServerTestBase {
     
@@ -62,20 +65,23 @@ public class OAuthTokenActivitiesTest extends GrizzlyServerTestBase {
         Mockito.reset(repositoryBinder.getMockedUserRepository());
     }
 
-    private void mockUserAuthenticationHappyCase(String userName, String password) 
-            throws UnsupportedEncodingException, NoSuchAlgorithmException, RepositoryClientException, RepositoryServerException {
-        UserAuthorizationRepositoryImpl mockedUserRepository = repositoryBinder.getMockedUserRepository();
-        ByteBuffer salt = UserPassAuthenticationHelper.generateRandomSalt();
-        ByteBuffer hashedPassword = UserPassAuthenticationHelper.generateHashedPassWithSalt(password, salt);
+    private void mockUserAuthenticationHappyCase(String loginName, String password) 
+            throws ValidatorException, UnsupportedEncodingException, NoSuchAlgorithmException, RepositoryClientException, RepositoryServerException {
+        UserRepositoryImpl mockedUserRepository = repositoryBinder.getMockedUserRepository();
+        ByteBuffer salt = PasswordAuthenticationHelper.generateRandomSalt();
+        ByteBuffer hashedPassword = PasswordAuthenticationHelper.generateHashedPassWithSalt(password, salt);
         UserAuthorizationInfo userAuthorizationInfo = UserAuthorizationInfo.buildUserAuthorizationInfo()
-                .userName(userName).hashedPassword(hashedPassword).salt(salt).build();
-        Mockito.doReturn(userAuthorizationInfo).when(mockedUserRepository).getUserAuthorizationInfo(userName);
+                .userId(1L).password(hashedPassword).salt(salt).build();
+        Long userId = SimpleFlakeKeyGenerator.generateKey();
+        Mockito.doReturn(userId).when(mockedUserRepository).getUserIdFromLoginName(loginName);
+        Mockito.doReturn(userAuthorizationInfo).when(mockedUserRepository).getUserAuthorizationInfo(userId);
     }
     
-    private void mockUserAuthenticationNoUser(String userName, String password) 
+    private void mockUserAuthenticationNoUser(String loginName, String password) 
             throws UnsupportedEncodingException, NoSuchAlgorithmException, RepositoryClientException, RepositoryServerException {
-        UserAuthorizationRepositoryImpl mockedUserRepository = repositoryBinder.getMockedUserRepository();
-        Mockito.doReturn(null).when(mockedUserRepository).getUserAuthorizationInfo(Mockito.anyString());
+        UserRepositoryImpl mockedUserRepository = repositoryBinder.getMockedUserRepository();
+        ItemNotFoundException itemNotFound = new ItemNotFoundException();
+        Mockito.doThrow(itemNotFound).when(mockedUserRepository).getUserIdFromLoginName(loginName);
     }
     
     private void mocTokenPersistencyDuplicateKeyOnce() 
@@ -137,18 +143,17 @@ public class OAuthTokenActivitiesTest extends GrizzlyServerTestBase {
      */
     @Test
     public void testGenerateTokenForPasswordHappyCase() throws Exception {
-        String userName = "user_name";
-        String password = "password";
-        mockUserAuthenticationHappyCase(userName, password);
+        String loginName = "login_name";
+        String password = "1a2b3c";
+        mockUserAuthenticationHappyCase(loginName, password);
         mocTokenPersistencyHappyCase();
-        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_USER_NAME, userName)
+        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_LOGIN_NAME, loginName)
                 .queryParam(OAuthTokenRequest.OAUTH_PASSWORD, password)
                 .queryParam(OAuthTokenRequest.OAUTH_GRANT_TYPE, GrantType.PASSWORD.toString()).request(MediaType.APPLICATION_JSON).get();
         assertEquals(Status.OK.getStatusCode(), response.getStatus());
         assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
 
         OAuthTokenResponse oauthTokenResponse = response.readEntity(OAuthTokenResponse.class);
-        System.out.println(oauthTokenResponse);
 
         assertNotNull(oauthTokenResponse);
         assertEquals(AuthenticationTokenType.ACCESS_TOKEN.toString(), oauthTokenResponse.getTokenType());
@@ -160,12 +165,12 @@ public class OAuthTokenActivitiesTest extends GrizzlyServerTestBase {
     @Test
     public void testGenerateTokenForPasswordWithDuplicateTokenOnceHappyCase() throws Exception {
         
-        String userName = "user_name";
-        String password = "password";
-        mockUserAuthenticationHappyCase(userName, password);
+        String loginName = "login_name";
+        String password = "1a2b3c";
+        mockUserAuthenticationHappyCase(loginName, password);
         mocTokenPersistencyDuplicateKeyOnce();
         
-        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_USER_NAME, userName)
+        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_LOGIN_NAME, loginName)
                 .queryParam(OAuthTokenRequest.OAUTH_PASSWORD, password)
                 .queryParam(OAuthTokenRequest.OAUTH_GRANT_TYPE, GrantType.PASSWORD.toString()).request(MediaType.APPLICATION_JSON).get();
         assertEquals(Status.OK.getStatusCode(), response.getStatus());
@@ -224,7 +229,7 @@ public class OAuthTokenActivitiesTest extends GrizzlyServerTestBase {
     @Test
     public void testRevokeTokenHappyCase() throws Exception {
         mocTokenRevocationHappyCase();
-        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthRevokeTokenRequest.OAUTH_TOKEN_TYPE, AuthenticationTokenType.ACCESS_TOKEN.toString())
+        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthRevokeTokenRequest.OAUTH_TOKEN_TYPE, AuthenticationTokenType.ACCESS_TOKEN.name())
                 .queryParam(OAuthRevokeTokenRequest.OAUTH_TOKEN, "token").request(MediaType.APPLICATION_JSON).delete();
         assertEquals(Status.OK.getStatusCode(), response.getStatus());
         assertNull(response.readEntity(Object.class));
@@ -235,8 +240,8 @@ public class OAuthTokenActivitiesTest extends GrizzlyServerTestBase {
      */
     @Test
     public void testGenerateTokenMissingGrantType() throws Exception {
-        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_USER_NAME, "user_name")
-                .queryParam(OAuthTokenRequest.OAUTH_PASSWORD, "password").request(MediaType.APPLICATION_JSON).get();
+        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_LOGIN_NAME, "login_name")
+                .queryParam(OAuthTokenRequest.OAUTH_PASSWORD, "1a2b3c").request(MediaType.APPLICATION_JSON).get();
         assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
         assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
 
@@ -249,8 +254,8 @@ public class OAuthTokenActivitiesTest extends GrizzlyServerTestBase {
 
     @Test
     public void testGenerateTokenEmptyGrantType() throws Exception {
-        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_USER_NAME, "user_name")
-                .queryParam(OAuthTokenRequest.OAUTH_PASSWORD, "password")
+        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_LOGIN_NAME, "login_name")
+                .queryParam(OAuthTokenRequest.OAUTH_PASSWORD, "1a2b3c")
                 .queryParam(OAuthTokenRequest.OAUTH_GRANT_TYPE, new String()).request(MediaType.APPLICATION_JSON).get();
         assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
         assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
@@ -265,8 +270,8 @@ public class OAuthTokenActivitiesTest extends GrizzlyServerTestBase {
 
     @Test
     public void testGenerateTokenUnsupportedGrantType() throws Exception {
-        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_USER_NAME, "user_name")
-                .queryParam(OAuthTokenRequest.OAUTH_PASSWORD, "password")
+        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_LOGIN_NAME, "login_name")
+                .queryParam(OAuthTokenRequest.OAUTH_PASSWORD, "1a2b3c")
                 .queryParam(OAuthTokenRequest.OAUTH_GRANT_TYPE, "unsupported_grant_type")
                 .request(MediaType.APPLICATION_JSON).get();
         assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
@@ -281,8 +286,8 @@ public class OAuthTokenActivitiesTest extends GrizzlyServerTestBase {
     }
 
     @Test
-    public void testGenerateTokenForPasswordMissingUserName() throws Exception {
-        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_PASSWORD, "password")
+    public void testGenerateTokenForPasswordMissingloginName() throws Exception {
+        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_PASSWORD, "1a2b3c")
                 .queryParam(OAuthTokenRequest.OAUTH_GRANT_TYPE, GrantType.PASSWORD.toString()).request(MediaType.APPLICATION_JSON).get();
         assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
         assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
@@ -291,13 +296,13 @@ public class OAuthTokenActivitiesTest extends GrizzlyServerTestBase {
         assertNotNull(errorResponse);
         assertEquals("OAuthBadRequestException", errorResponse.getErrorType());
         assertEquals(OAuthErrCode.MISSING_PARAMETERS.toString(), errorResponse.getErrorCode());
-        assertEquals( String.format(OAuthErrDescFormatter.MISSING_PARAMETERS.toString(), OAuthTokenRequest.OAUTH_USER_NAME), 
+        assertEquals( String.format(OAuthErrDescFormatter.MISSING_PARAMETERS.toString(), OAuthTokenRequest.OAUTH_LOGIN_NAME), 
                 errorResponse.getErrorDescription());
     }
 
     @Test
     public void testGenerateTokenForPasswordMissingPassword() throws Exception {
-        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_USER_NAME, "user_name")
+        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_LOGIN_NAME, "login_name")
                 .queryParam(OAuthTokenRequest.OAUTH_GRANT_TYPE, GrantType.PASSWORD.toString()).request(MediaType.APPLICATION_JSON).get();
         assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
         assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
@@ -312,10 +317,10 @@ public class OAuthTokenActivitiesTest extends GrizzlyServerTestBase {
 
     @Test
     public void testGenerateTokenForPasswordUserDoesNotExist() throws Exception {
-        String userName = "user_name";
-        String password = "password";
-        mockUserAuthenticationNoUser(userName, password);
-        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_USER_NAME, userName)
+        String loginName = "login_name";
+        String password = "1a2b3c";
+        mockUserAuthenticationNoUser(loginName, password);
+        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_LOGIN_NAME, loginName)
                 .queryParam(OAuthTokenRequest.OAUTH_PASSWORD, password)
                 .queryParam(OAuthTokenRequest.OAUTH_GRANT_TYPE, GrantType.PASSWORD.toString()).request(MediaType.APPLICATION_JSON).get();
         assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
@@ -324,18 +329,18 @@ public class OAuthTokenActivitiesTest extends GrizzlyServerTestBase {
         ErrorResponse errorResponse= response.readEntity(ErrorResponse.class);
         assertNotNull(errorResponse);
         assertEquals("OAuthBadRequestException", errorResponse.getErrorType());
-        assertEquals(OAuthErrCode.INVALID_GRANT.toString(), errorResponse.getErrorCode());
-        assertEquals(String.format(OAuthErrDescFormatter.INVALID_GRANT_PASSWORD.toString(), userName), 
+        assertEquals(OAuthErrCode.UNAUTHENTICATED_CLIENT.toString(), errorResponse.getErrorCode());
+        assertEquals(String.format(OAuthErrDescFormatter.UNAUTHENTICATED_CLIENT.toString(), loginName), 
                 errorResponse.getErrorDescription());
     }
     
     @Test
     public void testGenerateTokenForPasswordWrongPassword() throws Exception {
-        String userName = "user_name";
-        String password = "password";
-        mockUserAuthenticationHappyCase(userName, password);
+        String loginName = "login_name";
+        String password = "1a2b3c";
+        mockUserAuthenticationHappyCase(loginName, password);
         String wrongPassword = "wrong_password";
-        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_USER_NAME, userName)
+        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_LOGIN_NAME, loginName)
                 .queryParam(OAuthTokenRequest.OAUTH_PASSWORD, wrongPassword)
                 .queryParam(OAuthTokenRequest.OAUTH_GRANT_TYPE, GrantType.PASSWORD.toString()).request(MediaType.APPLICATION_JSON).get();
         assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
@@ -344,45 +349,10 @@ public class OAuthTokenActivitiesTest extends GrizzlyServerTestBase {
         ErrorResponse errorResponse= response.readEntity(ErrorResponse.class);
         assertNotNull(errorResponse);
         assertEquals("OAuthBadRequestException", errorResponse.getErrorType());
-        assertEquals(OAuthErrCode.INVALID_GRANT.toString(), errorResponse.getErrorCode());
-        assertEquals(String.format(OAuthErrDescFormatter.INVALID_GRANT_PASSWORD.toString(), userName), 
+        assertEquals(OAuthErrCode.UNAUTHENTICATED_CLIENT.toString(), errorResponse.getErrorCode());
+        assertEquals(String.format(OAuthErrDescFormatter.UNAUTHENTICATED_CLIENT.toString(), loginName), 
                 errorResponse.getErrorDescription());
     }
-    
-    // TODO: Uncomment the following two unit tests once we support client credentials
-//    @Test
-//    public void testGenerateTokenForClientCredentialMissingAuthorizationHeader() throws Exception {
-//        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_CLIENT_ID, "client_id")
-//                .queryParam(OAuthTokenRequest.OAUTH_GRANT_TYPE, GrantType.CLIENT_CREDENTIAL.toString()).request(MediaType.APPLICATION_JSON).get();
-//        assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-//        assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
-//
-//        ErrorResponse errorResponse= response.readEntity(ErrorResponse.class);
-//        assertNotNull(errorResponse);
-//        MissingAuthorizationException expectedException = new MissingAuthorizationException();
-//        assertEquals("MissingAuthorizationException", errorResponse.getErrorType());
-//        assertEquals(expectedException.getErrorCode(), errorResponse.getErrorCode());
-//        assertEquals(expectedException.getErrorDescription(), errorResponse.getErrorDescription());
-//    }
-//    
-//    @Test
-//    public void testGenerateTokenForClientCredentialUnrecognizedAuthenticationMethod() throws Exception {
-//        WebTarget clientCredentialWebTarget = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_CLIENT_ID, "client_id")
-//                .queryParam(OAuthTokenRequest.OAUTH_GRANT_TYPE, GrantType.CLIENT_CREDENTIAL.toString());
-//        Invocation.Builder invocationBuilder = clientCredentialWebTarget.request(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, 
-//                "UnrecognizedAuthorizationMethod " + Base64.encodeAsString("client_id:client_secret_proof"));
-//        
-//        Response response = invocationBuilder.get();
-//        assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-//        assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
-//
-//        ErrorResponse errorResponse= response.readEntity(ErrorResponse.class);
-//        assertNotNull(errorResponse);
-//        UnrecognizedAuthorizationMethodException expectedException = new UnrecognizedAuthorizationMethodException();
-//        assertEquals("UnrecognizedAuthorizationMethodException", errorResponse.getErrorType());
-//        assertEquals(expectedException.getErrorCode(), errorResponse.getErrorCode());
-//        assertEquals(expectedException.getErrorDescription(), errorResponse.getErrorDescription());
-//    }
     
     /*
      * Internal Server Errors
@@ -390,13 +360,13 @@ public class OAuthTokenActivitiesTest extends GrizzlyServerTestBase {
     @Test
     public void testGenerateTokenFailedToPersisTokenDueToDuplicateToken() throws Exception {
         
-        String userName = "user_name";
-        String password = "password";
-        mockUserAuthenticationHappyCase(userName, password);
+        String loginName = "login_name";
+        String password = "1a2b3c";
+        mockUserAuthenticationHappyCase(loginName, password);
         mocTokenPersistencyDuplicateKey();
         
-        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_USER_NAME, "user_name")
-                .queryParam(OAuthTokenRequest.OAUTH_PASSWORD, "password")
+        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_LOGIN_NAME, loginName)
+                .queryParam(OAuthTokenRequest.OAUTH_PASSWORD, password)
                 .queryParam(OAuthTokenRequest.OAUTH_GRANT_TYPE, GrantType.PASSWORD.toString()).request(MediaType.APPLICATION_JSON).get();
         assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
         assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
@@ -412,13 +382,13 @@ public class OAuthTokenActivitiesTest extends GrizzlyServerTestBase {
     @Test
     public void testGenerateTokenFailedToPersisTokenDueToBadRequest() throws Exception {
         
-        String userName = "user_name";
-        String password = "password";
-        mockUserAuthenticationHappyCase(userName, password);
+        String loginName = "login_name";
+        String password = "1a2b3c";
+        mockUserAuthenticationHappyCase(loginName, password);
         mocTokenPersistencyClientError();
         
-        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_USER_NAME, "user_name")
-                .queryParam(OAuthTokenRequest.OAUTH_PASSWORD, "password")
+        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_LOGIN_NAME, loginName)
+                .queryParam(OAuthTokenRequest.OAUTH_PASSWORD, password)
                 .queryParam(OAuthTokenRequest.OAUTH_GRANT_TYPE, GrantType.PASSWORD.toString()).request(MediaType.APPLICATION_JSON).get();
         assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
         assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
@@ -434,13 +404,13 @@ public class OAuthTokenActivitiesTest extends GrizzlyServerTestBase {
     @Test
     public void testGenerateTokenFailedToPersisTokenDueToServerError() throws Exception {
         
-        String userName = "user_name";
-        String password = "password";
-        mockUserAuthenticationHappyCase(userName, password);
+        String loginName = "login_name";
+        String password = "1a2b3c";
+        mockUserAuthenticationHappyCase(loginName, password);
         mocTokenPersistencyServerError();
         
-        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_USER_NAME, "user_name")
-                .queryParam(OAuthTokenRequest.OAUTH_PASSWORD, "password")
+        Response response = webTarget.path("oauth2/v1/token").queryParam(OAuthTokenRequest.OAUTH_LOGIN_NAME, loginName)
+                .queryParam(OAuthTokenRequest.OAUTH_PASSWORD, password)
                 .queryParam(OAuthTokenRequest.OAUTH_GRANT_TYPE, GrantType.PASSWORD.toString()).request(MediaType.APPLICATION_JSON).get();
         assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
         assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));

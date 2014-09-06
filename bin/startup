@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Run "sh startup target/HelloWorldArtifact-0.0.1-SNAPSHOT.jar" to start web service
-# Run "kill `cat server.pid`" to stop web service
+# Run "kill `cat tmp/processmanager.pid`" to stop web service
 
 # If a specific java binary isn't specified search for the standard 'java' binary
 if [ -n "$JAVA_HOME"  ] ; then

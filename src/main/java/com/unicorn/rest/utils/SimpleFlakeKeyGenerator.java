@@ -34,7 +34,7 @@ public class SimpleFlakeKeyGenerator {
         return ByteBuffer.allocate(8).putLong(SimpleFlakeKeyGenerator.generateKey());
     }
     
-    public static @Nonnull long generateKey() {
+    public static @Nonnull Long generateKey() {
         /**
          * TODO: clock adjustment (We DO NOT consider this as a critical problems at this moment, so ignore this for now.)
          * System.currentTimeMillis() is not monotonic. It is based on system time, and hence can be subject to variation either way (forward or backward) 
@@ -52,7 +52,7 @@ public class SimpleFlakeKeyGenerator {
      * @param curTimestamp
      * @return
      */
-    protected static @Nonnull long generateKey(long curTimestamp) {
+    protected static @Nonnull Long generateKey(long curTimestamp) {
         if (curTimestamp < EPOCH_TIME_IN_MILLS || curTimestamp > MAX_TIME_IN_MILLS) {
             /*
              *  The current time cannot be less than the customized EPOCH_TIME_IN_MILLS nor larger than the MAX_TIME_IN_MILLS

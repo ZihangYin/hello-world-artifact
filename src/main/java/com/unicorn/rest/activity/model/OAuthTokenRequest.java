@@ -25,7 +25,7 @@ public class OAuthTokenRequest {
     public static final String OAUTH_CLIENT_ID = "client_id";
     public static final String OAUTH_REQUEST_TOKEN = "request_token";
     public static final String OAUTH_REDIRECT_URI = "redirect_uri";    
-    public static final String OAUTH_USER_NAME = "user_name";
+    public static final String OAUTH_LOGIN_NAME = "login_name";
     public static final String OAUTH_PASSWORD = "password";
     public static final String OAUTH_REFRESH_TOKEN = "refresh_token";
     public static final String OAUTH_SCOPE = "scope";
@@ -52,7 +52,7 @@ public class OAuthTokenRequest {
     private final String clientId;
     private final String requestToken;
     private final String redirectUri;
-    private final String userName;
+    private final String loginName;
     private final String password;
     private final String refreshToken;
     private final List<String> scope;
@@ -64,18 +64,18 @@ public class OAuthTokenRequest {
 
         return new OAuthTokenRequest(multiValuedParameters.getFirst(OAUTH_GRANT_TYPE), multiValuedParameters.getFirst(OAUTH_CLIENT_ID), 
                 multiValuedParameters.getFirst(OAUTH_REQUEST_TOKEN), multiValuedParameters.getFirst(OAUTH_REDIRECT_URI), 
-                multiValuedParameters.getFirst(OAUTH_USER_NAME), multiValuedParameters.getFirst(OAUTH_PASSWORD), 
+                multiValuedParameters.getFirst(OAUTH_LOGIN_NAME), multiValuedParameters.getFirst(OAUTH_PASSWORD), 
                 multiValuedParameters.getFirst(OAUTH_REFRESH_TOKEN), multiValuedParameters.getFirst(OAUTH_SCOPE));
     }
 
     private OAuthTokenRequest(String grantType, String clientId,
-            String requestToken, String redirectUri, String userName, 
+            String requestToken, String redirectUri, String loginName, 
             String password, String refreshToken, String scope) throws OAuthBadRequestException {
 
         OAuthRequestValidator.validateRequiredParameter(OAUTH_GRANT_TYPE, grantType); 
 
         if (GrantType.PASSWORD.toString().equals(grantType)) {
-            OAuthRequestValidator.validateRequiredParameter(OAUTH_USER_NAME, userName);
+            OAuthRequestValidator.validateRequiredParameter(OAUTH_LOGIN_NAME, loginName);
             OAuthRequestValidator.validateRequiredParameter(OAUTH_PASSWORD, password);
             this.grantType = GrantType.PASSWORD;
         } else if (GrantType.CLIENT_CREDENTIAL.toString().equals(grantType)) {
@@ -94,7 +94,7 @@ public class OAuthTokenRequest {
         this.clientId = clientId;
         this.requestToken = requestToken;
         this.redirectUri = redirectUri;
-        this.userName = userName;
+        this.loginName = loginName;
         this.password = password;
         this.refreshToken = refreshToken;
         if (!StringUtils.isBlank(scope)) {
@@ -125,10 +125,10 @@ public class OAuthTokenRequest {
         return redirectUri;
     }
     /**
-     * @return userName @Nonnull if this is required parameter for this grant type
+     * @return loginName @Nonnull if this is required parameter for this grant type
      */
-    public String getUserName() {
-        return userName;
+    public String getLoginName() {
+        return loginName;
     }
     /**
      * @return password @Nonnull if this is required parameter for this grant type
@@ -161,8 +161,8 @@ public class OAuthTokenRequest {
         if (redirectUri != null) {
             builder.append(", redirectUri=").append(redirectUri);
         }
-        if (userName != null) {
-            builder.append(", userName=").append(userName);
+        if (loginName != null) {
+            builder.append(", loginName=").append(loginName);
         }
         if (password != null) {
             builder.append(", password=").append(password);

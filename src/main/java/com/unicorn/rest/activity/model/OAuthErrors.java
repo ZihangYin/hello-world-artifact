@@ -32,7 +32,7 @@ public class OAuthErrors {
         UNSUPPORTED_GRANT_TYPE ("The authorization grant type %s is not supported by the authorization server"),
         INVALID_GRANT_AUTHORIZATION_CODE ("The authorization code %s does not match any of our records"),
         INVALID_GRANT_REFRESH_TOKEN ("The refresh token %s does not match any of our records"),
-        INVALID_GRANT_PASSWORD ("The authentication failed on user %s due to invalid user name or password");
+        INVALID_GRANT_PASSWORD ("The authentication failed on user %s due to invalid login name or password");
 
         private String errDesc;
 
